@@ -9,3 +9,4 @@
 | **Filipe Corrêa**     |  [@Filipecorr34](https://github.com/Filipecorr34)   |
 | **Adryele Oliveira**  |  [@elleoliveir](https://github.com/elleoliveir)     |
 
+"O futuro não pode ser previsto, mas pode ser criado."
