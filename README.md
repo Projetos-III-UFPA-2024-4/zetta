@@ -1,4 +1,4 @@
-# zettta
+# zetta
 
 #### **Membros da equipe**
 
