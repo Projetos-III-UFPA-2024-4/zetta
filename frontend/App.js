@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
-import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, Text, View, ActivityIndicator } from 'react-native';
+import { StyleSheet, ActivityIndicator, View, Text } from 'react-native';
 import LoginTela from './screens/LoginTela';
 import HomeADM from './screens/HomeADM';
 import HomeUSER from './screens/HomeUSER';
+import CadastroMotorista from './screens/CadastroMotorista'; // Adicionado
 
 const Stack = createStackNavigator();
 
@@ -21,22 +21,19 @@ export default function App() {
 
     fetch(backendUrl, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(credentials),
     })
       .then((response) => {
         if (!response.ok) {
           return response.text().then((text) => {
-            throw new Error(`Erro na resposta do servidor: ${response.status} - ${text}`);
+            throw new Error(`Erro: ${response.status} - ${text}`);
           });
         }
         return response.json();
       })
       .then((data) => {
         setLoading(false);
-        // Navegar para a tela correta com base no tipo de usuário
         if (data.isAdmin) {
           navigation.navigate('HomeADM');
         } else {
@@ -52,36 +49,33 @@ export default function App() {
 
   return (
     <NavigationContainer>
+      {loading && (
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#0000ff" />
+        </View>
+      )}
       <Stack.Navigator initialRouteName="Login">
-        <Stack.Screen
-          name="Login"
-          options={{ title: 'Login' }}
-        >
-          {props => <LoginTela {...props} onLogin={(credentials) => handleLogin(credentials, props.navigation)} />}
+        <Stack.Screen name="Login" options={{ title: 'Login' }}>
+          {(props) => <LoginTela {...props} onLogin={(credentials) => handleLogin(credentials, props.navigation)} />}
         </Stack.Screen>
-        <Stack.Screen
-          name="HomeADM"
-          component={HomeADM}
-          options={{ title: 'Início' }}
-        />
-        <Stack.Screen
-          name="HomeUSER"
-          component={HomeUSER}
-          options={{ title: 'Início' }}
-        />
+        <Stack.Screen name="HomeADM" component={HomeADM} options={{ title: 'Admin' }} />
+        <Stack.Screen name="HomeUSER" component={HomeUSER} options={{ title: 'Usuário' }} />
+        <Stack.Screen name="CadastroMotorista" component={CadastroMotorista} options={{ title: 'Cadastro Motorista' }} />
       </Stack.Navigator>
+      {error && <Text style={styles.error}>{error}</Text>}
     </NavigationContainer>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
+  loadingContainer: {
     flex: 1,
-    backgroundColor: '#fff',
-    alignItems: 'center',
     justifyContent: 'center',
+    alignItems: 'center',
   },
   error: {
     color: 'red',
+    textAlign: 'center',
+    marginTop: 10,
   },
 });
