@@ -79,3 +79,13 @@ const styles = StyleSheet.create({
     marginTop: 10,
   },
 });
+const App = () => {
+  return (
+    <NavigationContainer>
+      <Stack.Navigator initialRouteName="HomeUSER">
+        <Stack.Screen name="HomeUSER" component={HomeUSER} />
+        <Stack.Screen name="ConducaoUSER" component={ConducaoUSER} />
+      </Stack.Navigator>
+    </NavigationContainer>
+  );
+};
