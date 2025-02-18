@@ -1,60 +1,58 @@
-// HomeUSER.js
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useNavigation } from '@react-navigation/native';
+import moment from 'moment';
+import 'moment/locale/pt-br';
+import 'moment-timezone';
+
+const timeZone = 'America/Sao_Paulo';
 
 const HomeUSER = () => {
+  const navigation = useNavigation();
+  const [currentDate, setCurrentDate] = useState(moment().tz(timeZone));
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentDate(moment().tz(timeZone));
+    }, 1000);
+    return () => clearInterval(timer);
+  }, []);
+
   return (
     <View style={styles.container}>
-      {/* Header */}
       <View style={styles.header}>
         <Ionicons name="menu" size={30} color="#fff" />
         <Text style={styles.headerText}>Iniciar Viagem</Text>
       </View>
 
-      {/* Minhas Viagens */}
       <View style={styles.tripsContainer}>
         <Text style={styles.tripsTitle}>Minhas Viagens</Text>
         <View style={styles.monthsContainer}>
-          <Text style={styles.month}>Outubro</Text>
-          <Text style={styles.month}>Novembro</Text>
-          <Text style={styles.month}>Dezembro</Text>
+          {[...Array(3)].map((_, index) => {
+            const month = moment().add(index, 'months').locale('pt-br').format('MMMM');
+            return <Text key={index} style={styles.month}>{month}</Text>;
+          })}
         </View>
         <View style={styles.dateContainer}>
-          <Text style={styles.date}>17</Text>
+          <Text style={styles.date}>{currentDate.format('DD')}</Text>
         </View>
       </View>
 
-      {/* Stats Section */}
       <View style={styles.statsContainer}>
-        <View style={styles.statBox}>
-          <Text style={styles.statLabel}>Tempo:</Text>
-          <Text style={styles.statValue}>00:32:45</Text>
-        </View>
-        <View style={styles.statBox}>
-          <Text style={styles.statLabel}>Distância:</Text>
-          <Text style={styles.statValue}>5.14 km</Text>
-        </View>
+        <StatBox label="Tempo:" value={currentDate.format('HH:mm:ss')} />
+        <StatBox label="Distância:" value="5.14 km" />
       </View>
 
-      {/* Sonolência & Velocidade */}
       <View style={styles.statsContainer}>
-        <View style={styles.statBox}>
-          <Text style={styles.statLabel}>Sonolência:</Text>
-          <Text style={styles.statValue}>23,3%</Text>
-        </View>
-        <View style={styles.statBox}>
-          <Text style={styles.statLabel}>Velocidade:</Text>
-          <Text style={styles.statValue}>54,27%</Text>
-        </View>
+        <StatBox label="Sonolência:" value="23,3%" />
+        <StatBox label="Velocidade:" value="54,27%" />
       </View>
 
-      {/* General Section */}
-      <View style={styles.generalContainer}>
+      <TouchableOpacity style={styles.generalContainer} onPress={() => navigation.navigate('ConducaoUSER')}>
         <Text style={styles.generalText}>Comportamento Perigoso</Text>
-      </View>
+      </TouchableOpacity>
 
-      {/* Start Trip Button */}
       <TouchableOpacity style={styles.startButton}>
         <Ionicons name="play" size={50} color="#fff" />
         <Text style={styles.startButtonText}>Iniciar Viagem</Text>
@@ -62,6 +60,13 @@ const HomeUSER = () => {
     </View>
   );
 };
+
+const StatBox = ({ label, value }) => (
+  <View style={styles.statBox}>
+    <Text style={styles.statLabel}>{label}</Text>
+    <Text style={styles.statValue}>{value}</Text>
+  </View>
+);
 
 const styles = StyleSheet.create({
   container: {
@@ -97,6 +102,7 @@ const styles = StyleSheet.create({
     marginRight: 10,
     fontSize: 16,
     color: '#1E90FF',
+    textTransform: 'capitalize',
   },
   dateContainer: {
     marginTop: 20,
@@ -153,8 +159,7 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 18,
     marginLeft: 10,
-  },
+  }
 });
 
 export default HomeUSER;
-
