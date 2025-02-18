@@ -32,8 +32,10 @@ const HomeUSER = () => {
 
   return (
     <View style={styles.container}>
-      {/* Image Logo */}
-      <Image source={require('./logo.png')} style={styles.logo} />
+      {/* Centralized Image */}
+      <View style={styles.imageContainer}>
+        <Image source={require('./assets/image.png')} style={styles.image} />
+      </View>
 
       <View style={styles.header}>
         <Ionicons name="menu" size={30} color="#fff" />
@@ -77,7 +79,8 @@ const HomeUSER = () => {
         <Text style={styles.generalText}>Comportamento Perigoso</Text>
       </TouchableOpacity>
 
-      <TouchableOpacity style={styles.startButton}>
+      {/* Start Trip Button */}
+      <TouchableOpacity style={styles.startButton} onPress={() => navigation.navigate('ConducaoUSER')}>
         <Ionicons name="play" size={50} color="#fff" />
         <Text style={styles.startButtonText}>Iniciar Viagem</Text>
       </TouchableOpacity>
@@ -98,12 +101,13 @@ const styles = StyleSheet.create({
     padding: 20,
     backgroundColor: '#f0f4f7',
   },
-  logo: {
-    position: 'absolute',
-    top: 10,
-    left: 10,
-    width: 50,
-    height: 50,
+  imageContainer: {
+    alignItems: 'center',
+    marginTop: 20,
+  },
+  image: {
+    width: 150,
+    height: 150,
     resizeMode: 'contain',
   },
   header: {
@@ -114,6 +118,7 @@ const styles = StyleSheet.create({
     paddingVertical: 20,
     paddingHorizontal: 15,
     borderRadius: 10,
+    marginTop: 20,
   },
   headerText: {
     color: '#fff',
