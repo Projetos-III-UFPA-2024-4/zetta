@@ -1,16 +1,19 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Image } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import moment from 'moment';
 import 'moment/locale/pt-br';
 import 'moment-timezone';
+import DateTimePickerModal from 'react-native-modal-datetime-picker';
 
 const timeZone = 'America/Sao_Paulo';
 
 const HomeUSER = () => {
   const navigation = useNavigation();
   const [currentDate, setCurrentDate] = useState(moment().tz(timeZone));
+  const [isDatePickerVisible, setDatePickerVisible] = useState(false);
+  const [selectedDate, setSelectedDate] = useState(null);
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -19,8 +22,19 @@ const HomeUSER = () => {
     return () => clearInterval(timer);
   }, []);
 
+  const showDatePicker = () => setDatePickerVisible(true);
+  const hideDatePicker = () => setDatePickerVisible(false);
+
+  const handleConfirm = (date) => {
+    setSelectedDate(moment(date).tz(timeZone).format('DD/MM/YYYY'));
+    hideDatePicker();
+  };
+
   return (
     <View style={styles.container}>
+      {/* Image Logo */}
+      <Image source={require('./logo.png')} style={styles.logo} />
+
       <View style={styles.header}>
         <Ionicons name="menu" size={30} color="#fff" />
         <Text style={styles.headerText}>Iniciar Viagem</Text>
@@ -34,9 +48,19 @@ const HomeUSER = () => {
             return <Text key={index} style={styles.month}>{month}</Text>;
           })}
         </View>
-        <View style={styles.dateContainer}>
-          <Text style={styles.date}>{currentDate.format('DD')}</Text>
-        </View>
+
+        {/* Select Date */}
+        <TouchableOpacity onPress={showDatePicker} style={styles.selectDateButton}>
+          <Text style={styles.date}>{selectedDate ? selectedDate : currentDate.format('DD/MM/YYYY')}</Text>
+        </TouchableOpacity>
+
+        {/* Date Picker Modal */}
+        <DateTimePickerModal
+          isVisible={isDatePickerVisible}
+          mode="date"
+          onConfirm={handleConfirm}
+          onCancel={hideDatePicker}
+        />
       </View>
 
       <View style={styles.statsContainer}>
@@ -74,6 +98,14 @@ const styles = StyleSheet.create({
     padding: 20,
     backgroundColor: '#f0f4f7',
   },
+  logo: {
+    position: 'absolute',
+    top: 10,
+    left: 10,
+    width: 50,
+    height: 50,
+    resizeMode: 'contain',
+  },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -104,11 +136,15 @@ const styles = StyleSheet.create({
     color: '#1E90FF',
     textTransform: 'capitalize',
   },
-  dateContainer: {
+  selectDateButton: {
     marginTop: 20,
+    backgroundColor: '#fff',
+    padding: 10,
+    borderRadius: 10,
+    alignItems: 'center',
   },
   date: {
-    fontSize: 40,
+    fontSize: 24,
     fontWeight: 'bold',
     color: '#1E90FF',
   },
