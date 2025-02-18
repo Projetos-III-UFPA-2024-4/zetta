@@ -7,6 +7,7 @@ import HomeADM from './screens/HomeADM';
 import HomeUSER from './screens/HomeUSER';
 import CadastroMotorista from './screens/CadastroMotorista'; // Adicionado
 
+
 const Stack = createStackNavigator();
 
 export default function App() {

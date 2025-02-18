@@ -21,20 +21,27 @@ const db = mysql.createConnection({
 
 // Conectar ao banco de dados
 db.connect((err) => {
-  if (err) throw err;
+  if (err) {
+    console.error('Erro ao conectar ao banco de dados:', err);
+    throw err;
+  }
   console.log('Conectado ao banco de dados MySQL');
 });
 
 // Rota de login
 app.post('/login', (req, res) => {
   const { user_id, senha } = req.body;
-  console.log('Dados recebidos:', { user_id, senha });
+  console.log('Dados recebidos no login:', { user_id, senha });
 
   const query = 'SELECT * FROM usuarios WHERE user_id = ?';
   db.query(query, [user_id], async (err, results) => {
-    if (err) throw err;
+    if (err) {
+      console.error('Erro ao buscar usuário no banco de dados:', err);
+      return res.status(500).json({ mensagem: 'Erro interno do servidor' });
+    }
 
     if (results.length === 0) {
+      console.log('Usuário não encontrado para user_id:', user_id);
       return res.status(400).json({ mensagem: 'Usuário não encontrado' });
     }
 
@@ -46,10 +53,12 @@ app.post('/login', (req, res) => {
     console.log('Senha válida?', senhaValida);
 
     if (!senhaValida) {
+      console.log('Senha incorreta para user_id:', user_id);
       return res.status(400).json({ mensagem: 'Senha incorreta' });
     }
 
     // Retornar informações do usuário e a rota de redirecionamento
+    console.log('Login realizado com sucesso para user_id:', user_id);
     return res.json({
       mensagem: 'Login realizado com sucesso!',
       redirectTo: usuario.tipo === 'admin' ? '/HomeADM' : '/HomeUSER',
@@ -67,20 +76,28 @@ app.post('/criar-usuario', async (req, res) => {
   // Verificar se o usuário já existe
   const checkUserQuery = 'SELECT * FROM usuarios WHERE user_id = ?';
   db.query(checkUserQuery, [user_id], async (err, results) => {
-    if (err) throw err;
+    if (err) {
+      console.error('Erro ao verificar se o usuário já existe:', err);
+      return res.status(500).json({ mensagem: 'Erro interno do servidor' });
+    }
 
     if (results.length > 0) {
+      console.log('Usuário já existe para user_id:', user_id);
       return res.status(400).json({ mensagem: 'Usuário já existe' });
     }
 
     // Criptografando a senha
     const senhaCriptografada = await bcrypt.hash(senha, 10);
+    console.log('Senha criptografada com sucesso');
 
     // Inserindo o novo usuário no banco com a senha criptografada
     const insertQuery = 'INSERT INTO usuarios (user_id, senha, nome, tipo) VALUES (?, ?, ?, ?)';
     db.query(insertQuery, [user_id, senhaCriptografada, nome, tipo], (err, results) => {
-      if (err) throw err;
-      console.log('Usuário criado com sucesso!');
+      if (err) {
+        console.error('Erro ao inserir usuário no banco de dados:', err);
+        return res.status(500).json({ mensagem: 'Erro interno do servidor' });
+      }
+      console.log('Usuário criado com sucesso:', { user_id, nome, tipo });
       return res.status(201).json({ mensagem: 'Usuário criado com sucesso' });
     });
   });
@@ -88,9 +105,14 @@ app.post('/criar-usuario', async (req, res) => {
 
 // Rota para listar todos os usuários (opcional, para fins de teste)
 app.get('/usuarios', (req, res) => {
+  console.log('Listando todos os usuários');
   const query = 'SELECT user_id, nome, tipo FROM usuarios';
   db.query(query, (err, results) => {
-    if (err) throw err;
+    if (err) {
+      console.error('Erro ao listar usuários:', err);
+      return res.status(500).json({ mensagem: 'Erro interno do servidor' });
+    }
+    console.log('Usuários listados com sucesso');
     return res.json(results);
   });
 });

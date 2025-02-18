@@ -14,30 +14,13 @@ const CadastroMotorista = ({ navigation }) => {
     const [showTipoCarteira, setShowTipoCarteira] = useState(false); 
     const [showGenero, setShowGenero] = useState(false); 
     const [showDataNascimento, setShowDataNascimento] = useState(false);
-    const [placaVeiculo, setPlacaVeiculo] = useState(''); 
-    const [showTipoId, setShowTipoId] = useState(false);
+    const [usaVeiculo, setUsaVeiculo] = useState('Não');
+    const [placaVeiculo, setPlacaVeiculo] = useState('');
 
-    const gerarId = (tipo) => {
-        const prefixo = tipo === 'Admin' ? 'ADM' : 'USER';
-        return `${prefixo}${Math.floor(Math.random() * 10000)}`;
-    };
-
-        // Função para salvar no banco (exemplo)
-        const salvarNoBanco = () => {
-            // Aqui você pode enviar para o banco os dados do usuário
-            const usuario = {
-                id: gerarId(tipoId),
-                tipo: tipoId, // O tipo de usuário (user ou admin)
-                nomeCompleto,
-                emailOuNumero,
-                dataNascimento,
-                tipoCarteira,
-                genero,
-                placaVeiculo: tipoId === 'user' ? placaVeiculo : null, // Se for user, salva a placa
-            };
-            console.log('Dados para salvar:', usuario);
-            // Código para salvar no banco aqui
-        };
+  const gerarId = (tipo) => {
+    const prefixo = tipo === 'Admin' ? 'ADM' : 'USER';
+    return `${prefixo}${Math.floor(Math.random() * 10000)}`;
+  };
 
   return (
     <View style={styles.container}>
@@ -99,26 +82,6 @@ const CadastroMotorista = ({ navigation }) => {
 
       <Image source={require('../assets/quadro2.png')} style={styles.quadroImage2} />
 
-    {/* Campo para tipo de usuário */}
-    <TouchableOpacity
-        onPress={() => setShowTipoId(!showTipoId)}
-        style={styles.inputC}
-    >
-    <Text style={styles.inputA}>Tipo de Usuário: {tipoId === 'user' ? 'User' : 'Admin'}</Text>
-        </TouchableOpacity>
-            {showTipoId && (
-                <View style={styles.pickerContainer}>
-                    <Picker
-                        selectedValue={tipoId}
-                        style={styles.picker}
-                        onValueChange={(itemValue) => setTipoId(itemValue)}
-                    >
-                    <Picker.Item label="User" value="user" />
-                    <Picker.Item label="Admin" value="admin" />
-                    </Picker>
-                </View>
-                )}
-
       {/* Mostrar Picker de Tipo de Carteira somente se a seleção estiver ativa */}
       <TouchableOpacity onPress={() => setShowTipoCarteira(!showTipoCarteira)} style={styles.pickerContainer}>
         <Text style={styles.inputA}>{tipoCarteira ? `Tipo de Carteira: ${tipoCarteira}` : 'Selecione o Tipo de Carteira'}</Text>
@@ -159,7 +122,7 @@ const CadastroMotorista = ({ navigation }) => {
       )}
 
       <TouchableOpacity style={styles.button} onPress={() => alert('Motorista cadastrado!')}>
-        <Text style={styles.buttonText}>Próximo</Text>
+        <Text style={styles.buttonText}>Cadastrar</Text>
       </TouchableOpacity>
 
       <TouchableOpacity onPress={() => navigation.goBack()} style={styles.voltarButton}>
@@ -189,7 +152,7 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: '#fff',
     marginBottom: 20,
-    top: 10,
+    top: -40,
     padding: 10,
     color: '#fff',
   },
@@ -200,23 +163,17 @@ const styles = StyleSheet.create({
     top: -10,
     padding: 10,
   },
-  inputC: {
-    width: '83%',
-    marginBottom: 20,
-    top: 25,
-    padding: 10,
-  },
   datePicker: {
     width: '70%',
     marginBottom: -35,
     left: 85,
-    top: -90,
+    top: -100,
   },
   pickerContainer: {
     width: '70%',
     marginBottom: 1,
     left: -15,
-    top: 0,
+    top: 30,
   },
   picker: {
     color: '#fff',
@@ -228,7 +185,7 @@ const styles = StyleSheet.create({
   button: {
     backgroundColor: '#61B8D8',
     padding: 10,
-    top: 100,
+    top: 40,
     borderRadius: 15,
   },
   buttonText: {
@@ -236,7 +193,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   voltarButton: {
-    top: 100,
+    top: 25,
     marginTop: 20,
   },
   voltarText: {
@@ -257,7 +214,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 400,
     width: 340,
-    height: 220,
+    height: 120,
     marginBottom: 20,
     borderTopLeftRadius: 0,
     borderTopRightRadius: 20,

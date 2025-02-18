@@ -13,7 +13,7 @@ const LoginTela = ({ navigation }) => {
 
     try {
       // Substitua pelo IP da sua máquina ou localhost para o simulador
-      const response = await fetch('http://192.168.100.7:5000/login', {
+      const response = await fetch('http://192.168.1.190:5000/login', { 
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -24,7 +24,6 @@ const LoginTela = ({ navigation }) => {
       const data = await response.json();
 
       if (response.ok) {
-        Alert.alert('Sucesso', data.mensagem);
 
         // Navegar para a tela correta com base no tipo de usuário
         if (data.redirectTo === '/HomeADM') {
