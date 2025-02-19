@@ -1,10 +1,50 @@
-import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Image } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, Image, FlatList } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 
 const HomeADM = () => {
   const navigation = useNavigation();
   const [search, setSearch] = useState('');
+  const [usuarios, setUsuarios] = useState([]); // Estado para armazenar os usuários
+  const [usuariosFiltrados, setUsuariosFiltrados] = useState([]); // Estado para armazenar os usuários filtrados
+
+  // Função para buscar os usuários do banco de dados
+  const buscarUsuarios = async () => {
+    try {
+        const response = await fetch('http://192.168.100.7:5000/usuarios');
+        
+        if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(`Erro na requisição: ${response.status} - ${errorText}`);
+        }
+
+        const data = await response.json();
+        setUsuarios(data);
+        setUsuariosFiltrados(data);
+    } catch (error) {
+        console.error('Erro ao buscar usuários:', error);
+    }
+};
+
+  // Função para filtrar os usuários com base na pesquisa
+  const filtrarUsuarios = (texto) => {
+    setSearch(texto); // Atualiza o estado da pesquisa
+    if (texto) {
+      const filtrados = usuarios.filter(
+        (usuario) =>
+          usuario.user_id.toLowerCase().includes(texto.toLowerCase()) ||
+          usuario.nome.toLowerCase().includes(texto.toLowerCase())
+      );
+      setUsuariosFiltrados(filtrados); // Atualiza a lista filtrada
+    } else {
+      setUsuariosFiltrados(usuarios); // Se o campo de pesquisa estiver vazio, exibe todos os usuários
+    }
+  };
+
+  // Busca os usuários ao carregar a tela
+  useEffect(() => {
+    buscarUsuarios();
+  }, []);
 
   return (
     <View style={styles.container}>
@@ -22,9 +62,9 @@ const HomeADM = () => {
         <View style={styles.searchContainer}>
           <TextInput
             style={styles.searchInput}
-            placeholder="Digite o nome do motorista"
+            placeholder="Digite o nome ou ID do motorista"
             value={search}
-            onChangeText={setSearch}
+            onChangeText={filtrarUsuarios} // Filtra os usuários conforme o texto digitado
           />
           <TouchableOpacity style={styles.searchButton} onPress={() => alert(`Buscando: ${search}`)}>
             <Text style={styles.searchButtonText}>Buscar</Text>
@@ -33,6 +73,24 @@ const HomeADM = () => {
           <TouchableOpacity style={styles.addButton} onPress={() => navigation.navigate('CadastroMotorista')}>
             <Image source={require('../assets/add.png')} style={styles.addIcon} />
           </TouchableOpacity>
+        </View>
+
+        {/* Tabela de usuários */}
+        <View style={styles.tabelaContainer}>
+          <View style={styles.tabelaHeader}>
+            <Text style={styles.headerText}>ID</Text>
+            <Text style={styles.headerText}>Nome</Text>
+          </View>
+          <FlatList
+            data={usuariosFiltrados}
+            keyExtractor={(item) => item.user_id}
+            renderItem={({ item }) => (
+              <View style={styles.tabelaLinha}>
+                <Text style={styles.linhaText}>{item.user_id}</Text>
+                <Text style={styles.linhaText}>{item.nome}</Text>
+              </View>
+            )}
+          />
         </View>
       </View>
 
@@ -96,6 +154,9 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: 'bold',
     marginBottom: 16,
+    top: -100,
+    left: -90,
+    color: "#042B3D",
   },
   searchContainer: {
     flexDirection: 'row',
@@ -105,6 +166,7 @@ const styles = StyleSheet.create({
   },
   searchInput: {
     height: 40,
+    top: -125,
     width: '80%',
     borderColor: 'gray',
     borderRadius: 20,
@@ -113,6 +175,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'white',
   },
   searchButton: {
+    top: -125,
     height: 40,
     width: '20%',
     backgroundColor: '#61B8D8',
@@ -140,6 +203,33 @@ const styles = StyleSheet.create({
     bottom: -590,
     left: -89.7,
     zIndex: -1,
+  },
+  tabelaContainer: {
+    top: -125,
+    width: '100%',
+    marginTop: 20,
+  },
+  tabelaHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    padding: 10,
+    backgroundColor: '#61B8D8',
+    borderRadius: 5,
+  },
+  headerText: {
+    color: '#fff',
+    fontWeight: 'bold',
+    fontSize: 16,
+  },
+  tabelaLinha: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    padding: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: '#ccc',
+  },
+  linhaText: {
+    fontSize: 14,
   },
 });
 

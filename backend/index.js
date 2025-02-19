@@ -1,124 +1,164 @@
-// Importar dependências
 const express = require('express');
-const mysql = require('mysql2');
+const mysql = require('mysql2/promise');
 const bcrypt = require('bcryptjs');
 const cors = require('cors');
 
-// Criar a instância do Express
 const app = express();
-
-// Usar JSON e CORS
 app.use(express.json());
 app.use(cors());
 
-// Configuração do banco de dados
-const db = mysql.createConnection({
-  host: 'localhost',
-  user: 'root',  // Seu usuário do MySQL
-  password: 'amand',  // Sua senha do MySQL
-  database: 'sistema_login',  // Nome do banco de dados
-});
-
-// Conectar ao banco de dados
-db.connect((err) => {
-  if (err) {
-    console.error('Erro ao conectar ao banco de dados:', err);
-    throw err;
-  }
-  console.log('Conectado ao banco de dados MySQL');
-});
+const dbConfig = {
+    host: 'localhost',
+    user: 'root',
+    password: 'amand',
+    database: 'sistema_login',
+};
 
 // Rota de login
-app.post('/login', (req, res) => {
-  const { user_id, senha } = req.body;
-  console.log('Dados recebidos no login:', { user_id, senha });
+app.post('/login', async (req, res) => {
+    const { user_id, senha } = req.body;
+    console.log('Dados recebidos no login:', { user_id, senha });
 
-  const query = 'SELECT * FROM usuarios WHERE user_id = ?';
-  db.query(query, [user_id], async (err, results) => {
-    if (err) {
-      console.error('Erro ao buscar usuário no banco de dados:', err);
-      return res.status(500).json({ mensagem: 'Erro interno do servidor' });
+    const connection = await mysql.createConnection(dbConfig);
+    try {
+        const [results] = await connection.query('SELECT * FROM usuarios WHERE user_id = ?', [user_id]);
+
+        if (results.length === 0) {
+            console.log('Usuário não encontrado para user_id:', user_id);
+            return res.status(400).json({ mensagem: 'Usuário não encontrado' });
+        }
+
+        const usuario = results[0];
+        const senhaValida = await bcrypt.compare(senha, usuario.senha);
+
+        if (!senhaValida) {
+            console.log('Senha incorreta para user_id:', user_id);
+            return res.status(400).json({ mensagem: 'Senha incorreta' });
+        }
+
+        console.log('Login realizado com sucesso para user_id:', user_id);
+        return res.json({
+            mensagem: 'Login realizado com sucesso!',
+            redirectTo: usuario.tipo === 'admin' ? '/HomeADM' : '/HomeUSER',
+            tipo: usuario.tipo,
+            nome: usuario.nome,
+        });
+    } catch (err) {
+        console.error('Erro ao processar login:', err);
+        return res.status(500).json({ mensagem: 'Erro interno do servidor', detalhes: err.message });
+    } finally {
+        connection.end();
     }
-
-    if (results.length === 0) {
-      console.log('Usuário não encontrado para user_id:', user_id);
-      return res.status(400).json({ mensagem: 'Usuário não encontrado' });
-    }
-
-    const usuario = results[0];
-    console.log('Usuário encontrado:', usuario);
-
-    // Comparar a senha recebida com a senha criptografada
-    const senhaValida = await bcrypt.compare(senha, usuario.senha);
-    console.log('Senha válida?', senhaValida);
-
-    if (!senhaValida) {
-      console.log('Senha incorreta para user_id:', user_id);
-      return res.status(400).json({ mensagem: 'Senha incorreta' });
-    }
-
-    // Retornar informações do usuário e a rota de redirecionamento
-    console.log('Login realizado com sucesso para user_id:', user_id);
-    return res.json({
-      mensagem: 'Login realizado com sucesso!',
-      redirectTo: usuario.tipo === 'admin' ? '/HomeADM' : '/HomeUSER',
-      tipo: usuario.tipo, // Retorna o tipo de usuário
-      nome: usuario.nome, // Retorna o nome do usuário
-    });
-  });
 });
 
-// Rota de criação de usuário (para cadastrar usuários com senha criptografada)
+// Função para gerar o ID com prefixo e número inicial
+const gerarId = async (tipo) => {
+    const prefixo = tipo === 'admin' ? 'ADM' : 'USER';
+
+    const connection = await mysql.createConnection(dbConfig);
+    try {
+        const [results] = await connection.query(
+            'SELECT MAX(user_id) as ultimoId FROM usuarios WHERE user_id LIKE ?',
+            [`${prefixo}%`]
+        );
+
+        const ultimoId = results[0].ultimoId || `${prefixo}0`; // Se não existir, retorna um ID padrão
+        const ultimoNumero = parseInt(ultimoId.replace(prefixo, ''), 10);
+        const novoNumero = ultimoNumero + 1;
+
+        return `${prefixo}${novoNumero}`;
+    } catch (err) {
+        console.error('Erro ao gerar ID:', err);
+        throw err; // Propaga o erro
+    } finally {
+        connection.end();
+    }
+};
+
+// Rota de criação de usuário
 app.post('/criar-usuario', async (req, res) => {
-  const { user_id, senha, nome, tipo } = req.body;
-  console.log('Dados recebidos para criar usuário:', { user_id, senha, nome, tipo });
+    const { senha, nome, tipo } = req.body;
 
-  // Verificar se o usuário já existe
-  const checkUserQuery = 'SELECT * FROM usuarios WHERE user_id = ?';
-  db.query(checkUserQuery, [user_id], async (err, results) => {
-    if (err) {
-      console.error('Erro ao verificar se o usuário já existe:', err);
-      return res.status(500).json({ mensagem: 'Erro interno do servidor' });
+    // Validação dos dados
+    if (!senha || !nome || !tipo) {
+        return res.status(400).json({ mensagem: 'Dados incompletos' });
     }
 
-    if (results.length > 0) {
-      console.log('Usuário já existe para user_id:', user_id);
-      return res.status(400).json({ mensagem: 'Usuário já existe' });
-    }
+    try {
+        const user_id = await gerarId(tipo); // Gera um ID único
+        console.log('Dados recebidos para criar usuário:', { user_id, senha, nome, tipo });
 
-    // Criptografando a senha
-    const senhaCriptografada = await bcrypt.hash(senha, 10);
-    console.log('Senha criptografada com sucesso');
+        const connection = await mysql.createConnection(dbConfig);
+        const senhaCriptografada = await bcrypt.hash(senha, 10);
+        await connection.query(
+            'INSERT INTO usuarios (user_id, senha, nome, tipo) VALUES (?, ?, ?, ?)',
+            [user_id, senhaCriptografada, nome, tipo]
+        );
 
-    // Inserindo o novo usuário no banco com a senha criptografada
-    const insertQuery = 'INSERT INTO usuarios (user_id, senha, nome, tipo) VALUES (?, ?, ?, ?)';
-    db.query(insertQuery, [user_id, senhaCriptografada, nome, tipo], (err, results) => {
-      if (err) {
+        console.log('Usuário criado com sucesso:', { user_id, nome, tipo });
+        return res.status(201).json({ mensagem: 'Usuário criado com sucesso' });
+    } catch (err) {
         console.error('Erro ao inserir usuário no banco de dados:', err);
-        return res.status(500).json({ mensagem: 'Erro interno do servidor' });
-      }
-      console.log('Usuário criado com sucesso:', { user_id, nome, tipo });
-      return res.status(201).json({ mensagem: 'Usuário criado com sucesso' });
-    });
-  });
-});
-
-// Rota para listar todos os usuários (opcional, para fins de teste)
-app.get('/usuarios', (req, res) => {
-  console.log('Listando todos os usuários');
-  const query = 'SELECT user_id, nome, tipo FROM usuarios';
-  db.query(query, (err, results) => {
-    if (err) {
-      console.error('Erro ao listar usuários:', err);
-      return res.status(500).json({ mensagem: 'Erro interno do servidor' });
+        return res.status(500).json({ mensagem: 'Erro interno do servidor', detalhes: err.message });
     }
-    console.log('Usuários listados com sucesso');
-    return res.json(results);
-  });
 });
 
-// Iniciar o servidor
+// Rota para verificar se o user_id já existe
+app.get('/verificar-id/:id', async (req, res) => {
+    const { id } = req.params;
+
+    const connection = await mysql.createConnection(dbConfig);
+    try {
+        const [results] = await connection.query('SELECT COUNT(*) as count FROM usuarios WHERE user_id = ?', [id]);
+        const exists = results[0].count > 0;
+
+        console.log(`Verificando ID: ${id}, Existe: ${exists}`);
+        return res.json({ exists });
+    } catch (err) {
+        console.error('Erro ao verificar ID existente:', err);
+        return res.status(500).json({ mensagem: 'Erro interno do servidor', detalhes: err.message });
+    } finally {
+        connection.end();
+    }
+});
+
+// Rota para buscar o último ID com base no tipo
+app.get('/ultimo-id/:tipo', async (req, res) => {
+    const { tipo } = req.params;
+    const prefixo = tipo === 'admin' ? 'ADM' : 'USER';
+
+    const connection = await mysql.createConnection(dbConfig);
+    try {
+        const [results] = await connection.query(
+            'SELECT MAX(user_id) as ultimoId FROM usuarios WHERE user_id LIKE ?',
+            [`${prefixo}%`]
+        );
+
+        const ultimoId = results[0].ultimoId || `${prefixo}0`; // Se não existir, retorna um ID padrão
+        return res.json({ ultimoId });
+    } catch (err) {
+        console.error('Erro ao buscar último ID salvo:', err);
+        return res.status(500).json({ mensagem: 'Erro interno do servidor', detalhes: err.message });
+    } finally {
+        connection.end();
+    }
+});
+
+// Rota para buscar todos os usuários
+app.get('/usuarios', async (req, res) => {
+    const connection = await mysql.createConnection(dbConfig);
+    try {
+        const [results] = await connection.query('SELECT user_id, nome FROM usuarios');
+        res.json(results); // Retorna a lista de usuários
+    } catch (err) {
+        console.error('Erro ao buscar usuários:', err);
+        res.status(500).json({ mensagem: 'Erro interno do servidor', detalhes: err.message });
+    } finally {
+        connection.end();
+    }
+});
+
 const PORT = 5000;
 app.listen(PORT, () => {
-  console.log(`Servidor rodando na porta ${PORT}`);
+    console.log(`Servidor rodando na porta ${PORT}`);
 });
