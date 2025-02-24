@@ -1,6 +1,5 @@
 const express = require('express');
 const mysql = require('mysql2/promise');
-const bcrypt = require('bcryptjs');
 const cors = require('cors');
 
 const app = express();
@@ -10,7 +9,7 @@ app.use(cors());
 const dbConfig = {
     host: 'localhost',
     user: 'root',
-    password: 'amand',
+    password: 'çLipe13976302ç',
     database: 'sistema_login',
 };
 
@@ -29,7 +28,7 @@ app.post('/login', async (req, res) => {
         }
 
         const usuario = results[0];
-        const senhaValida = await bcrypt.compare(senha, usuario.senha);
+        const senhaValida = senha === usuario.senha; // Comparação direta da senha
 
         if (!senhaValida) {
             console.log('Senha incorreta para user_id:', user_id);
@@ -75,7 +74,6 @@ const gerarId = async (tipo) => {
     }
 };
 
-// Rota de criação de usuário
 app.post('/criar-usuario', async (req, res) => {
     const { senha, nome, tipo } = req.body;
 
@@ -89,10 +87,9 @@ app.post('/criar-usuario', async (req, res) => {
         console.log('Dados recebidos para criar usuário:', { user_id, senha, nome, tipo });
 
         const connection = await mysql.createConnection(dbConfig);
-        const senhaCriptografada = await bcrypt.hash(senha, 10);
         await connection.query(
             'INSERT INTO usuarios (user_id, senha, nome, tipo) VALUES (?, ?, ?, ?)',
-            [user_id, senhaCriptografada, nome, tipo]
+            [user_id, senha, nome, tipo] // Armazena a senha sem criptografia
         );
 
         console.log('Usuário criado com sucesso:', { user_id, nome, tipo });
