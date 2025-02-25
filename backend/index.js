@@ -9,7 +9,7 @@ app.use(cors());
 const dbConfig = {
     host: 'localhost',
     user: 'root',
-    password: 'çLipe13976302ç',
+    password: 'amand',
     database: 'sistema_login',
 };
 

@@ -14,8 +14,7 @@ export default function App() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  const backendUrl = 'http://192.168.100.7:5000/login';
-
+  const backendUrl = 'http://192.168.1.242:5000/login';
   const handleLogin = (credentials, navigation) => {
     setLoading(true);
     setError(null);
