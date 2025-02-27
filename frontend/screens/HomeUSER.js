@@ -1,15 +1,17 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet,Image, Alert } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Image, Alert } from 'react-native';
 
-const HomeUSER = () => {
+const HomeUSER = ({ navigation }) => {  // Adicionando 'navigation' como prop
   const handlePress = () => {
     Alert.alert('Botão Clicado', 'Você pressionou o botão!');
   };
+
   return (
     <View style={styles.container}> 
-<TouchableOpacity onPress={handlePress} style={styles.logoImage}>
-      <Image source={require('../assets/play.png')} style={styles.logoImage} />
-    </TouchableOpacity>
+      <TouchableOpacity onPress={handlePress} style={styles.logoImage}>
+        <Image source={require('../assets/play.png')} style={styles.logoImage} />
+      </TouchableOpacity>
+
       <View style={styles.bolaAzulClaro} />
       <View style={styles.bolaAzul} />
       <Text style={styles.headerText}>Iniciar Viagem</Text>
@@ -24,17 +26,26 @@ const HomeUSER = () => {
       <Image source={require('../assets/icon_carro.png')} style={styles.icon_car} />
       <Image source={require('../assets/icon_ia.png')} style={styles.icon_ia} />
 
-      <Text style={styles.navegacao}>Navegação</Text>
+      
       <Text style={styles.carro}>Histórico</Text>
       <Text style={styles.alerta}>Alertas</Text>
-     
 
-      <TouchableOpacity style={styles.button} onPress={() => alert('Comportamento Perigoso')}>
-        <Text style={styles.buttonText}>Comportamento Perigoso</Text>
+      {/* Botão para Navegação para ConducaoUSER */}
+      <TouchableOpacity 
+        style={styles.button}
+        onPress={() => navigation.navigate('ConducaoUSER')}  // Navegando para ConducaoUSER
+      >
+        <Text style={styles.buttonText}>Navegação</Text>  {/* Botão Navegação */}
+      </TouchableOpacity>
+
+      {/* Botão para Navegação para IA_USER */}
+      <TouchableOpacity 
+        style={styles.buttonia}
+        onPress={() => navigation.navigate('IA_USER')}  // Navegando para ConducaoUSER
+      >
+        <Text style={styles.buttoniatext}>Alertas</Text>  {/* Botão Navegação */}
       </TouchableOpacity>
       
-      
-
       <TouchableOpacity style={styles.startButton}>
         <Text style={styles.startButtonText}>Iniciar Viagem</Text>
       </TouchableOpacity>
@@ -80,8 +91,6 @@ const styles = StyleSheet.create({
     width: 330,
     borderTopLeftRadius: 30,
     borderTopRightRadius: 30,
-    borderBottomLeftRadius: 0,
-    borderBottomRightRadius: 0,
     height: 95,
     top: 239,
   },
@@ -89,10 +98,6 @@ const styles = StyleSheet.create({
     left: 10,
     position: 'absolute',
     width: 165,
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 3,
-    borderBottomLeftRadius: 20,
-    borderBottomRightRadius: 0,
     height: 95,
     top: 340,
   },
@@ -100,10 +105,6 @@ const styles = StyleSheet.create({
     left: 185,
     position: 'absolute',
     width: 164,
-    borderTopLeftRadius: 0,
-    borderTopRightRadius: 20,
-    borderBottomLeftRadius: 0,
-    borderBottomRightRadius: 20,
     height: 95,
     top: 340,
   },
@@ -111,25 +112,15 @@ const styles = StyleSheet.create({
     left: 12,
     position: 'absolute',
     width: 339,
-    borderTopLeftRadius: 0,
-    borderTopRightRadius: 0,
-    borderBottomLeftRadius: 30,
-    borderBottomRightRadius: 30,
     height: 95,
     top: 440,
   },
   barradenavegacao: {
     position: 'absolute',
     left: 0,
-    position: 'absolute',
     width: 370,
-    borderTopLeftRadius: 0,
-    borderTopRightRadius: 0,
-    borderBottomLeftRadius: 0,
-    borderBottomRightRadius: 0,
     height: 70,
     top: 590,
-    color: '#69B1CB',
   },
   icon_cond: {
     left: 40,
@@ -137,7 +128,6 @@ const styles = StyleSheet.create({
     width: 30,
     height: 30,
     top: 600,
-    
   },
   icon_car: {
     left: 150,
@@ -145,7 +135,6 @@ const styles = StyleSheet.create({
     width: 60,
     height: 40,
     top: 590,
-    
   },
   icon_ia: {
     left: 270,
@@ -153,7 +142,6 @@ const styles = StyleSheet.create({
     width: 35,
     height: 35,
     top: 590,
-    
   },
   headerText: {
     fontSize: 24,
@@ -163,60 +151,50 @@ const styles = StyleSheet.create({
     color: '#FFF',
   },
   viagemText: {
-    left: -70,
-    width: 200,
+    left: -90,
     fontSize: 22,
     fontWeight: 'bold',
     marginBottom: 40,
-    top: -10,
+    top: -29,
     color: '#000',
-  
   },
-  navegacao: {
-    left: -115,
-    fontSize: 15,
-    fontWeight: 'bold',
-    marginBottom: 20,
-    top: 350,
-    color: '#FFF',
-  },
+
   carro: {
     left: -3,
     fontSize: 15,
     fontWeight: 'bold',
     marginBottom: 20,
-    top: 310,
+    top: 330,
     color: '#FFF',
   },
-  alerta: {
-    left: 115,
-    fontSize: 15,
-    fontWeight: 'bold',
-    marginBottom: 20,
-    top: 270,
-    color: '#FFF',
-  },
-  statsContainer: {
-    marginBottom: 30,
-  },
-  statText: {
-    fontSize: 18,
-    marginVertical: 5,
-  },
+  
   button: {
-    backgroundColor: '#1E90FF',
     padding: 10,
     borderRadius: 5,
     marginBottom: 20,
+    top: 240,
+    left: -119,
   },
   buttonText: {
     color: '#fff',
     fontSize: 16,
   },
+  buttonia: {
+    padding: 10,
+    borderRadius: 5,
+    marginBottom: 20,
+    top: 220,
+    left: 120,
+  },
+  buttoniatext: {
+    color: '#fff',
+    fontSize: 16,
+  },
   startButton: {
-    backgroundColor: '#28a745',
+  
     padding: 15,
     borderRadius: 5,
+    top: 5000
   },
   startButtonText: {
     color: '#fff',
