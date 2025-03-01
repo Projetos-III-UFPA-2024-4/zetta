@@ -13,7 +13,7 @@ const LoginTela = ({ navigation }) => {
 
     try {
       // Substitua pelo IP da sua máquina ou localhost para o simulador
-      const response = await fetch('http://192.168.100.190:5000/login', { 
+      const response = await fetch('http://192.168.1.6:5000/login', { 
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -120,7 +120,7 @@ const styles = StyleSheet.create({
     height: 45,
     backgroundColor: '#042B3D',
     alignSelf: 'center',
-    paddingVertical: 14,
+    paddingVertical: 10,
     borderRadius: 25,
     alignItems: 'center',
   },

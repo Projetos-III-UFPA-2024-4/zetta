@@ -7,6 +7,7 @@ import HomeADM from './screens/HomeADM';
 import HomeUSER from './screens/HomeUSER';
 import CadastroMotorista from './screens/CadastroMotorista';
 import ConducaoUSER from './screens/ConducaoUSER';
+import CameraFunction from "./screens/CameraFunction";
 import IA_USER from './screens/IA_USER'; // Importa a tela de condução
 
 const Stack = createStackNavigator();
@@ -15,7 +16,7 @@ export default function App() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  const backendUrl = 'http://192.168.100.190:5000/login';
+  const backendUrl = 'http://192.168.1.6:5000/login';
 
   const handleLogin = (credentials, navigation) => {
     setLoading(true);
@@ -63,6 +64,7 @@ export default function App() {
         <Stack.Screen name="HomeADM" component={HomeADM} options={{ title: 'Admin' }} />
         <Stack.Screen name="HomeUSER" component={HomeUSER} options={{ title: 'Usuário' }} />
         <Stack.Screen name="CadastroMotorista" component={CadastroMotorista} options={{ title: 'Cadastro Motorista' }} />
+        <Stack.Screen name="CameraFunction" component={CameraFunction}/>
         <Stack.Screen name="ConducaoUSER" component={ConducaoUSER} options={{ title: 'Condução' }} />
         <Stack.Screen name="IA_USER" component={IA_USER} options={{ title: 'IA' }} />
       </Stack.Navigator>
