@@ -141,12 +141,12 @@ app.get('/ultimo-id/:tipo', async (req, res) => {
     }
 });
 
-// Rota para buscar todos os usuários
 app.get('/usuarios', async (req, res) => {
     const connection = await mysql.createConnection(dbConfig);
     try {
-        const [results] = await connection.query('SELECT user_id, nome FROM usuarios');
-        res.json(results); // Retorna a lista de usuários
+        // Busca apenas os usuários do tipo "user"
+        const [results] = await connection.query('SELECT user_id, nome FROM usuarios WHERE tipo = ?', ['user']);
+        res.json(results); // Retorna a lista de user_id e nome do tipo "user"
     } catch (err) {
         console.error('Erro ao buscar usuários:', err);
         res.status(500).json({ mensagem: 'Erro interno do servidor', detalhes: err.message });
@@ -154,55 +154,6 @@ app.get('/usuarios', async (req, res) => {
         connection.end();
     }
 });
-
-// Rota para excluir um usuário pelo ID
-app.delete('/usuarios/:id', async (req, res) => {
-    const { id } = req.params; // Pegando o user_id do parâmetro da rota
-
-    const connection = await mysql.createConnection(dbConfig);
-    try {
-        // Verificando se o usuário existe
-        const [results] = await connection.query('SELECT COUNT(*) as count FROM usuarios WHERE user_id = ?', [id]);
-        if (results[0].count === 0) {
-            return res.status(404).json({ mensagem: 'Usuário não encontrado' });
-        }
-
-        // Excluindo o usuário com o ID fornecido
-        await connection.query('DELETE FROM usuarios WHERE user_id = ?', [id]);
-        console.log(`Usuário com ID ${id} excluído com sucesso.`);
-
-        return res.status(200).json({ mensagem: 'Usuário excluído com sucesso' });
-    } catch (err) {
-        console.error('Erro ao excluir usuário:', err);
-        return res.status(500).json({ mensagem: 'Erro interno do servidor', detalhes: err.message });
-    } finally {
-        connection.end();
-    }
-});
-
-// Rota para visualizar um motorista pelo ID
-app.get('/visualizar-motorista/:id', async (req, res) => {
-    const { id } = req.params;
-
-    const connection = await mysql.createConnection(dbConfig);
-    try {
-        const [results] = await connection.query('SELECT * FROM usuarios WHERE user_id = ?', [id]);
-
-        if (results.length === 0) {
-            return res.status(404).json({ mensagem: 'Motorista não encontrado' });
-        }
-
-        const usuario = results[0];
-        return res.json(usuario); // Retorna os dados do motorista
-    } catch (err) {
-        console.error('Erro ao buscar motorista:', err);
-        return res.status(500).json({ mensagem: 'Erro interno do servidor', detalhes: err.message });
-    } finally {
-        connection.end();
-    }
-});
-
-
 
 const PORT = 5000;
 app.listen(PORT, () => {
