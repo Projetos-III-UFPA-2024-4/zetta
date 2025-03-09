@@ -1,19 +1,17 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Image, Alert } from 'react-native';
 
-const HomeUSER = ({ navigation }) => {
+const HomeUSER = ({ navigation }) => {  // Adicionando 'navigation' como prop
   const handlePress = () => {
-    navigation.navigate('CameraFunction'); // Navega para a tela da câmera
+    Alert.alert('Botão Clicado', 'Você pressionou o botão!');
   };
 
   return (
-    <View style={styles.container}>
-      {/* Botão de play que abre a câmera */}
+    <View style={styles.container}> 
       <TouchableOpacity onPress={handlePress} style={styles.logoImage}>
         <Image source={require('../assets/play.png')} style={styles.logoImage} />
       </TouchableOpacity>
 
-      {/* Restante do código da tela HomeUSER */}
       <View style={styles.bolaAzulClaro} />
       <View style={styles.bolaAzul} />
       <Text style={styles.headerText}>Iniciar Viagem</Text>
@@ -28,25 +26,36 @@ const HomeUSER = ({ navigation }) => {
       <Image source={require('../assets/icon_carro.png')} style={styles.icon_car} />
       <Image source={require('../assets/icon_ia.png')} style={styles.icon_ia} />
 
-      <Text style={styles.carro}>Histórico</Text>
-      <Text style={styles.alerta}>Alertas</Text>
+      
+      <Text style={styles.nav}>Navegação segura</Text>
+      <Text style={styles.comece}>Comece sua viagem com segurança</Text>
 
       {/* Botão para Navegação para ConducaoUSER */}
-      <TouchableOpacity
+      <TouchableOpacity 
         style={styles.button}
-        onPress={() => navigation.navigate('ConducaoUSER')}
+        onPress={() => navigation.navigate('ConducaoUSER')}  // Navegando para ConducaoUSER
       >
-        <Text style={styles.buttonText}>Navegação</Text>
+        <Text style={styles.buttonText}>Navegação</Text>  {/* Botão Navegação */}
       </TouchableOpacity>
 
+      {/* Botão para Navegação para Historico_USER */}
+      <TouchableOpacity 
+        style={styles.buttonhi}
+        onPress={() => {
+        console.log('Botão Histórico pressionado'); // Log para depuração
+        navigation.navigate('Historico_USER');
+  }}
+>
+  <Text style={styles.buttonh}>Histórico</Text>
+</TouchableOpacity>
       {/* Botão para Navegação para IA_USER */}
-      <TouchableOpacity
+      <TouchableOpacity 
         style={styles.buttonia}
-        onPress={() => navigation.navigate('IA_USER')}
+        onPress={() => navigation.navigate('IA_USER')}  // Navegando para ConducaoUSER
       >
-        <Text style={styles.buttoniatext}>Alertas</Text>
+        <Text style={styles.buttoniatext}>Alertas</Text>  {/* Botão Navegação */}
       </TouchableOpacity>
-
+      
       <TouchableOpacity style={styles.startButton}>
         <Text style={styles.startButtonText}>Iniciar Viagem</Text>
       </TouchableOpacity>
@@ -54,8 +63,7 @@ const HomeUSER = ({ navigation }) => {
   );
 };
 
-// Estilos (mantenha os mesmos estilos do seu código original)
-const styles = StyleSheet.create({
+export const styles = StyleSheet.create({
   container: {
     flex: 1,
     justifyContent: 'center',
@@ -90,104 +98,92 @@ const styles = StyleSheet.create({
   },
   cima: {
     position: 'absolute',
-    width: 330,
-    borderTopLeftRadius: 50,
-    borderTopRightRadius: 50,
-    height: 95,
+    width: 310,
+    borderTopLeftRadius: 30,
+    borderTopRightRadius: 30,
+    height: 90,
     top: 239,
   },
   meio1: {
-    left: 41,
+    left: 10,
     position: 'absolute',
-    width: 161,
-    borderTopLeftRadius: 10,
-    borderBottomLeftRadius: 10,
+    width: 165,
     height: 95,
     top: 340,
   },
   meio2: {
-    left: 209,
+    left: 185,
     position: 'absolute',
-    width: 162,
-    borderTopRightRadius: 10,
-    borderBottomRightRadius: 10,
+    width: 164,
     height: 95,
     top: 340,
   },
   baixo: {
-    left: 41,
+    left: 12,
     position: 'absolute',
-    width: 330,
-    borderBottomLeftRadius: 50,
-    borderBottomRightRadius: 50,
+    width: 339,
     height: 95,
     top: 440,
   },
   barradenavegacao: {
     position: 'absolute',
     left: 0,
-    width: 412,
+    width: 370,
     height: 70,
-    top: 724,
+    top: 590,
   },
   icon_cond: {
     left: 40,
     position: 'absolute',
     width: 30,
     height: 30,
-    top: 730,
+    top: 600,
   },
   icon_car: {
-    left: 172,
+    left: 150,
     position: 'absolute',
-    width: 65,
-    height: 44,
-    top: 722,
+    width: 50,
+    height: 40,
+    top: 595,
   },
   icon_ia: {
-    left: 330,
+    left: 285,
     position: 'absolute',
-    width: 35,
-    height: 31,
-    top: 730,
+    width: 30,
+    height: 30,
+    top: 599,
   },
   headerText: {
     fontSize: 24,
     fontWeight: 'bold',
     marginBottom: 20,
-    top: -129,
+    top: -10,
     color: '#FFF',
   },
   viagemText: {
-    position: 'absolute', // Posicionamento absoluto
-    left: 129, // Ajuste horizontal
-    top: 270, // Ajuste vertical
-    fontSize: 20,
+    left: -90,
+    fontSize: 22,
     fontWeight: 'bold',
-    color: '#FFF',
-    zIndex: 2, // Garante que o texto fique sobre a imagem
+    marginBottom: 40,
+    top: 10,
+    color: '#000',
   },
-  alerta: {
-    position: 'absolute', // Posicionamento absoluto
-    left: 171, // Ajuste horizontal
-    top: 469, // Ajuste vertical
-    fontSize: 20, // Tamanho da fonte
-    color: '#FFF', // Cor do texto
-    fontWeight: 'bold', // Peso da fonte (negrito)
-  },
+
   carro: {
-    left: 0,
+    left: -3,
     fontSize: 15,
+    fontWeight: 'bold',
     marginBottom: 20,
-    top: 453,
+    top: 330,
     color: '#FFF',
   },
+  
   button: {
     padding: 10,
     borderRadius: 5,
     marginBottom: 20,
-    top: 398,
-    left: -150,
+    top: 320,
+    left: -119,
   },
   buttonText: {
     color: '#fff',
@@ -197,22 +193,44 @@ const styles = StyleSheet.create({
     padding: 10,
     borderRadius: 5,
     marginBottom: 20,
-    top: 335,
-    left: 141,
+    top: 196,
+    left: 120,
   },
   buttoniatext: {
     color: '#fff',
     fontSize: 16,
   },
+  buttonhi: {
+    padding: 10,
+    borderRadius: 5,
+    marginBottom: 20,
+    top: 256,
+    width: 100, // Largura fixa
+    alignItems: 'center', // Centralizar texto
+  },
+  buttonh: {
+    color: '#fff',
+    fontSize: 16,
+  },
   startButton: {
+  
     padding: 15,
     borderRadius: 5,
-    top: 5000,
+    top: 5000
   },
   startButtonText: {
     color: '#fff',
     fontSize: 18,
   },
+ nav: {
+    color: '#fff',
+    fontSize: 18,
+  },
+ comece: {
+    color: '#fff',
+    fontSize: 18,
+  },
+
 });
 
 export default HomeUSER;
