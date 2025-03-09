@@ -8,7 +8,8 @@ import HomeUSER from './screens/HomeUSER';
 import CadastroMotorista from './screens/CadastroMotorista';
 import ConducaoUSER from './screens/ConducaoUSER';
 import CameraFunction from "./screens/CameraFunction";
-import IA_USER from './screens/IA_USER'; // Importa a tela de condução
+import IA_USER from './screens/IA_USER'; 
+import Historico_USER from './screens/Historico_USER'; 
 
 const Stack = createStackNavigator();
 
@@ -67,6 +68,8 @@ export default function App() {
         <Stack.Screen name="CameraFunction" component={CameraFunction}/>
         <Stack.Screen name="ConducaoUSER" component={ConducaoUSER} options={{ title: 'Condução' }} />
         <Stack.Screen name="IA_USER" component={IA_USER} options={{ title: 'IA' }} />
+        <Stack.Screen name="Historico_USER" component={Historico_USER} options={{ title: 'Histórico de viagens' }} />
+
       </Stack.Navigator>
       {error && <Text style={styles.error}>{error}</Text>}
     </NavigationContainer>
