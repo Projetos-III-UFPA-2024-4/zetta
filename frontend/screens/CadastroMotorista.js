@@ -20,7 +20,7 @@ const CadastroMotorista = ({ navigation }) => {
     
     const gerarId = async (tipo) => {
         try {
-            const response = await fetch(`http://192.168.100.7:5000/ultimo-id/${tipo}`);
+            const response = await fetch(`http://192.168.100.8:5000/ultimo-id/${tipo}`);
             const data = await response.json();
             const ultimoId = data.ultimoId || `${tipo === 'admin' ? 'ADM' : 'USER'}0`;
             const ultimoNumero = parseInt(ultimoId.replace(tipo === 'admin' ? 'ADM' : 'USER', ''), 10);
@@ -40,7 +40,7 @@ const CadastroMotorista = ({ navigation }) => {
 
     const verificarIdExistente = async (novoId) => {
         try {
-            const response = await fetch(`http://192.168.100.7:5000/verificar-id/${novoId}`);
+            const response = await fetch(`http://192.168.100.8:5000/verificar-id/${novoId}`);
             const data = await response.json();
             return data.exists;
         } catch (error) {
@@ -69,7 +69,7 @@ const CadastroMotorista = ({ navigation }) => {
         };
     
         try {
-            const response = await fetch('http://192.168.100.7:5000/criar-usuario', {
+            const response = await fetch('http://192.168.100.8:5000/criar-usuario', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

@@ -11,20 +11,20 @@ const HomeADM = () => {
   // Função para buscar os usuários do banco de dados
   const buscarUsuarios = async () => {
     try {
-        const response = await fetch('http://192.168.1.120:5000/usuarios');
-        
-        if (!response.ok) {
-            const errorText = await response.text();
-            throw new Error(`Erro na requisição: ${response.status} - ${errorText}`);
-        }
+      const response = await fetch('http://192.168.100.8:5000/usuarios');
 
-        const data = await response.json();
-        setUsuarios(data);
-        setUsuariosFiltrados(data);
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Erro na requisição: ${response.status} - ${errorText}`);
+      }
+
+      const data = await response.json();
+      setUsuarios(data);
+      setUsuariosFiltrados(data);
     } catch (error) {
-        console.error('Erro ao buscar usuários:', error);
+      console.error('Erro ao buscar usuários:', error);
     }
-};
+  };
 
   // Função para filtrar os usuários com base na pesquisa
   const filtrarUsuarios = (texto) => {
@@ -32,8 +32,8 @@ const HomeADM = () => {
     if (texto) {
       const filtrados = usuarios.filter(
         (usuario) =>
-          usuario.user_id.toLowerCase().includes(texto.toLowerCase()) ||
-          usuario.nome.toLowerCase().includes(texto.toLowerCase())
+          (usuario.user_id && usuario.user_id.toLowerCase().includes(texto.toLowerCase())) ||
+          (usuario.nome && usuario.nome.toLowerCase().includes(texto.toLowerCase()))
       );
       setUsuariosFiltrados(filtrados); // Atualiza a lista filtrada
     } else {
@@ -80,30 +80,30 @@ const HomeADM = () => {
           <View style={styles.tabelaHeader}>
             <Text style={styles.headerText}>ID</Text>
             <Text style={styles.headerText}>Nome</Text>
-            <Text style={styles.headerText}>Ações</Text> {/* Nova coluna para os botões */}
+            <Text style={styles.headerText}>Ações</Text>
           </View>
           <FlatList
             data={usuariosFiltrados}
-            keyExtractor={(item) => item.user_id}
+            keyExtractor={(item) => item.user_id || Math.random().toString()} // Garante uma chave única
             renderItem={({ item }) => (
               <View style={styles.tabelaLinha}>
-                <Text style={styles.linhaText}>{item.user_id}</Text>
-                <Text style={styles.linhaText}>{item.nome}</Text>
+                <Text style={styles.linhaText}>{item.user_id || 'N/A'}</Text>
+                <Text style={styles.linhaText}>{item.nome || 'N/A'}</Text>
                 <View style={styles.acoesContainer}>
-                  <TouchableOpacity 
-                    style={styles.acaoButton} 
+                  <TouchableOpacity
+                    style={styles.acaoButton}
                     onPress={() => navigation.navigate('EditarMotorista', { userId: item.user_id })}
                   >
                     <Image source={require('../assets/edit.png')} style={styles.acaoEdit} />
                   </TouchableOpacity>
-                  <TouchableOpacity 
-                    style={styles.acaoButton} 
+                  <TouchableOpacity
+                    style={styles.acaoButton}
                     onPress={() => navigation.navigate('ExcluirMotorista', { userId: item.user_id })}
                   >
                     <Image source={require('../assets/lixo.png')} style={styles.acaoLixo} />
                   </TouchableOpacity>
-                  <TouchableOpacity 
-                    style={styles.acaoButton} 
+                  <TouchableOpacity
+                    style={styles.acaoButton}
                     onPress={() => navigation.navigate('VisualizarMotorista', { userId: item.user_id })}
                   >
                     <Image source={require('../assets/visu.png')} style={styles.acaoVisu} />
@@ -177,7 +177,7 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     top: -100,
     left: -90,
-    color: "#042B3D",
+    color: '#042B3D',
   },
   searchContainer: {
     flexDirection: 'row',
@@ -260,6 +260,14 @@ const styles = StyleSheet.create({
     marginLeft: 10,
   },
   acaoEdit: {
+    width: 18,
+    height: 18,
+  },
+  acaoLixo: {
+    width: 18,
+    height: 18,
+  },
+  acaoVisu: {
     width: 18,
     height: 18,
   },

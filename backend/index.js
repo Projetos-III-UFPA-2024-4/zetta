@@ -6,6 +6,7 @@ const app = express();
 app.use(express.json());
 app.use(cors());
 
+// Configuração do banco de dados
 const dbConfig = {
     host: 'localhost',
     user: 'root',
@@ -13,13 +14,20 @@ const dbConfig = {
     database: 'sistema_login',
 };
 
+// Middleware de erro global
+app.use((err, req, res, next) => {
+    console.error('Erro global:', err);
+    res.status(500).json({ mensagem: 'Erro interno do servidor', detalhes: err.message });
+});
+
 // Rota de login
 app.post('/login', async (req, res) => {
     const { user_id, senha } = req.body;
     console.log('Dados recebidos no login:', { user_id, senha });
 
-    const connection = await mysql.createConnection(dbConfig);
+    let connection;
     try {
+        connection = await mysql.createConnection(dbConfig);
         const [results] = await connection.query('SELECT * FROM usuarios WHERE user_id = ?', [user_id]);
 
         if (results.length === 0) {
@@ -28,7 +36,7 @@ app.post('/login', async (req, res) => {
         }
 
         const usuario = results[0];
-        const senhaValida = senha === usuario.senha; // Comparação direta da senha
+        const senhaValida = await bcrypt.compare(senha, usuario.senha); // Comparação segura da senha
 
         if (!senhaValida) {
             console.log('Senha incorreta para user_id:', user_id);
@@ -46,7 +54,7 @@ app.post('/login', async (req, res) => {
         console.error('Erro ao processar login:', err);
         return res.status(500).json({ mensagem: 'Erro interno do servidor', detalhes: err.message });
     } finally {
-        connection.end();
+        if (connection) await connection.end();
     }
 });
 
@@ -54,8 +62,9 @@ app.post('/login', async (req, res) => {
 const gerarId = async (tipo) => {
     const prefixo = tipo === 'admin' ? 'ADM' : 'USER';
 
-    const connection = await mysql.createConnection(dbConfig);
+    let connection;
     try {
+        connection = await mysql.createConnection(dbConfig);
         const [results] = await connection.query(
             'SELECT MAX(user_id) as ultimoId FROM usuarios WHERE user_id LIKE ?',
             [`${prefixo}%`]
@@ -70,10 +79,11 @@ const gerarId = async (tipo) => {
         console.error('Erro ao gerar ID:', err);
         throw err; // Propaga o erro
     } finally {
-        connection.end();
+        if (connection) await connection.end();
     }
 };
 
+// Rota para criar usuário
 app.post('/criar-usuario', async (req, res) => {
     const { senha, nome, tipo } = req.body;
 
@@ -82,14 +92,17 @@ app.post('/criar-usuario', async (req, res) => {
         return res.status(400).json({ mensagem: 'Dados incompletos' });
     }
 
+    let connection;
     try {
         const user_id = await gerarId(tipo); // Gera um ID único
+        const senhaCriptografada = await bcrypt.hash(senha, 10); // Criptografa a senha
+
         console.log('Dados recebidos para criar usuário:', { user_id, senha, nome, tipo });
 
-        const connection = await mysql.createConnection(dbConfig);
+        connection = await mysql.createConnection(dbConfig);
         await connection.query(
             'INSERT INTO usuarios (user_id, senha, nome, tipo) VALUES (?, ?, ?, ?)',
-            [user_id, senha, nome, tipo] // Armazena a senha sem criptografia
+            [user_id, senhaCriptografada, nome, tipo]
         );
 
         console.log('Usuário criado com sucesso:', { user_id, nome, tipo });
@@ -97,6 +110,8 @@ app.post('/criar-usuario', async (req, res) => {
     } catch (err) {
         console.error('Erro ao inserir usuário no banco de dados:', err);
         return res.status(500).json({ mensagem: 'Erro interno do servidor', detalhes: err.message });
+    } finally {
+        if (connection) await connection.end();
     }
 });
 
@@ -104,8 +119,9 @@ app.post('/criar-usuario', async (req, res) => {
 app.get('/verificar-id/:id', async (req, res) => {
     const { id } = req.params;
 
-    const connection = await mysql.createConnection(dbConfig);
+    let connection;
     try {
+        connection = await mysql.createConnection(dbConfig);
         const [results] = await connection.query('SELECT COUNT(*) as count FROM usuarios WHERE user_id = ?', [id]);
         const exists = results[0].count > 0;
 
@@ -115,7 +131,29 @@ app.get('/verificar-id/:id', async (req, res) => {
         console.error('Erro ao verificar ID existente:', err);
         return res.status(500).json({ mensagem: 'Erro interno do servidor', detalhes: err.message });
     } finally {
-        connection.end();
+        if (connection) await connection.end();
+    }
+});
+
+// Endpoint para buscar um usuário pelo ID
+app.get('/usuario/:id', async (req, res) => {
+    console.log('Requisição recebida em /usuario/:id');
+    const { id } = req.params;
+    console.log('ID do usuário:', id);
+
+    let connection;
+    try {
+        connection = await mysql.createConnection(dbConfig);
+        const [results] = await connection.query('SELECT * FROM usuarios WHERE user_id = ?', [id]);
+        if (results.length === 0) {
+            return res.status(404).json({ mensagem: 'Usuário não encontrado' });
+        }
+        res.json(results[0]); // Retorna o primeiro usuário encontrado
+    } catch (err) {
+        console.error('Erro ao buscar usuário:', err);
+        res.status(500).json({ mensagem: 'Erro interno do servidor', detalhes: err.message });
+    } finally {
+        if (connection) await connection.end();
     }
 });
 
@@ -124,8 +162,9 @@ app.get('/ultimo-id/:tipo', async (req, res) => {
     const { tipo } = req.params;
     const prefixo = tipo === 'admin' ? 'ADM' : 'USER';
 
-    const connection = await mysql.createConnection(dbConfig);
+    let connection;
     try {
+        connection = await mysql.createConnection(dbConfig);
         const [results] = await connection.query(
             'SELECT MAX(user_id) as ultimoId FROM usuarios WHERE user_id LIKE ?',
             [`${prefixo}%`]
@@ -137,21 +176,57 @@ app.get('/ultimo-id/:tipo', async (req, res) => {
         console.error('Erro ao buscar último ID salvo:', err);
         return res.status(500).json({ mensagem: 'Erro interno do servidor', detalhes: err.message });
     } finally {
-        connection.end();
+        if (connection) await connection.end();
     }
 });
 
+// Rota para buscar usuários
 app.get('/usuarios', async (req, res) => {
-    const connection = await mysql.createConnection(dbConfig);
+    let connection;
     try {
-        // Busca apenas os usuários do tipo "user"
-        const [results] = await connection.query('SELECT user_id, nome FROM usuarios WHERE tipo = ?', ['user']);
-        res.json(results); // Retorna a lista de user_id e nome do tipo "user"
+        connection = await mysql.createConnection(dbConfig);
+        console.log('Conexão com o banco de dados estabelecida.');
+
+        const [results] = await connection.query(
+            'SELECT user_id, nome FROM usuarios WHERE tipo = ?',
+            ['user']
+        );
+
+        console.log('Resultados da query:', results);
+
+        if (results.length === 0) {
+            console.log('Nenhum usuário encontrado.');
+            return res.status(404).json({ mensagem: 'Nenhum usuário encontrado' });
+        }
+
+        res.json(results);
     } catch (err) {
         console.error('Erro ao buscar usuários:', err);
         res.status(500).json({ mensagem: 'Erro interno do servidor', detalhes: err.message });
     } finally {
-        connection.end();
+        if (connection) await connection.end();
+    }
+});
+
+
+// Rota para atualizar usuário
+app.put('/atualizar-usuario/:id', async (req, res) => {
+    const { id } = req.params;
+    const { nome, emailOuNumero, dataNascimento, tipoCarteira, placaVeiculo, senha } = req.body;
+
+    let connection;
+    try {
+        connection = await mysql.createConnection(dbConfig);
+        await connection.query(
+            'UPDATE usuarios SET nome = ?, emailOuNumero = ?, dataNascimento = ?, tipoCarteira = ?, placaVeiculo = ?, senha = ? WHERE user_id = ?',
+            [nome, emailOuNumero, dataNascimento, tipoCarteira, placaVeiculo, senha, id]
+        );
+        res.json({ mensagem: 'Usuário atualizado com sucesso' });
+    } catch (err) {
+        console.error('Erro ao atualizar usuário:', err);
+        res.status(500).json({ mensagem: 'Erro interno do servidor', detalhes: err.message });
+    } finally {
+        if (connection) await connection.end();
     }
 });
 
