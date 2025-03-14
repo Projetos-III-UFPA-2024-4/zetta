@@ -36,7 +36,7 @@ app.post('/login', async (req, res) => {
         }
 
         const usuario = results[0];
-        const senhaValida = await bcrypt.compare(senha, usuario.senha); // Comparação segura da senha
+        const senhaValida = senha === usuario.senha; // Comparação direta da senha (texto plano)
 
         if (!senhaValida) {
             console.log('Senha incorreta para user_id:', user_id);
@@ -83,9 +83,11 @@ const gerarId = async (tipo) => {
     }
 };
 
-// Rota para criar usuário
 app.post('/criar-usuario', async (req, res) => {
-    const { senha, nome, tipo } = req.body;
+    const { senha, nome, tipo, email, dataNascimento, tipoCarteira, placaVeiculo } = req.body;
+
+    // Formata a data no backend
+    const dataNascimentoFormatada = new Date(dataNascimento).toISOString().split('T')[0];
 
     // Validação dos dados
     if (!senha || !nome || !tipo) {
@@ -95,14 +97,13 @@ app.post('/criar-usuario', async (req, res) => {
     let connection;
     try {
         const user_id = await gerarId(tipo); // Gera um ID único
-        const senhaCriptografada = await bcrypt.hash(senha, 10); // Criptografa a senha
 
-        console.log('Dados recebidos para criar usuário:', { user_id, senha, nome, tipo });
+        console.log('Dados recebidos para criar usuário:', { user_id, senha, nome, tipo, email, dataNascimentoFormatada, tipoCarteira, placaVeiculo });
 
         connection = await mysql.createConnection(dbConfig);
         await connection.query(
-            'INSERT INTO usuarios (user_id, senha, nome, tipo) VALUES (?, ?, ?, ?)',
-            [user_id, senhaCriptografada, nome, tipo]
+            'INSERT INTO usuarios (user_id, senha, nome, tipo, email, dataNascimento, tipoCarteira, placaVeiculo) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+            [user_id, senha, nome, tipo, email, dataNascimentoFormatada, tipoCarteira, placaVeiculo]
         );
 
         console.log('Usuário criado com sucesso:', { user_id, nome, tipo });
@@ -141,9 +142,8 @@ app.get('/usuario/:id', async (req, res) => {
     const { id } = req.params;
     console.log('ID do usuário:', id);
 
-    let connection;
+    const connection = await mysql.createConnection(dbConfig);
     try {
-        connection = await mysql.createConnection(dbConfig);
         const [results] = await connection.query('SELECT * FROM usuarios WHERE user_id = ?', [id]);
         if (results.length === 0) {
             return res.status(404).json({ mensagem: 'Usuário não encontrado' });
@@ -153,7 +153,7 @@ app.get('/usuario/:id', async (req, res) => {
         console.error('Erro ao buscar usuário:', err);
         res.status(500).json({ mensagem: 'Erro interno do servidor', detalhes: err.message });
     } finally {
-        if (connection) await connection.end();
+        connection.end();
     }
 });
 
@@ -209,21 +209,45 @@ app.get('/usuarios', async (req, res) => {
 });
 
 
-// Rota para atualizar usuário
 app.put('/atualizar-usuario/:id', async (req, res) => {
     const { id } = req.params;
-    const { nome, emailOuNumero, dataNascimento, tipoCarteira, placaVeiculo, senha } = req.body;
+    const { nome, email, dataNascimento, tipoCarteira, placaVeiculo, senha } = req.body;
 
     let connection;
     try {
         connection = await mysql.createConnection(dbConfig);
         await connection.query(
-            'UPDATE usuarios SET nome = ?, emailOuNumero = ?, dataNascimento = ?, tipoCarteira = ?, placaVeiculo = ?, senha = ? WHERE user_id = ?',
-            [nome, emailOuNumero, dataNascimento, tipoCarteira, placaVeiculo, senha, id]
+            'UPDATE usuarios SET nome = ?, email = ?, dataNascimento = ?, tipoCarteira = ?, placaVeiculo = ?, senha = ? WHERE user_id = ?',
+            [nome, email, dataNascimento, tipoCarteira, placaVeiculo, senha, id]
         );
         res.json({ mensagem: 'Usuário atualizado com sucesso' });
     } catch (err) {
         console.error('Erro ao atualizar usuário:', err);
+        res.status(500).json({ mensagem: 'Erro interno do servidor', detalhes: err.message });
+    } finally {
+        if (connection) await connection.end();
+    }
+});
+
+
+app.delete('/deletar-usuario/:id', async (req, res) => {
+    const { id } = req.params;
+
+    let connection;
+    try {
+        connection = await mysql.createConnection(dbConfig);
+
+        // Executa a query para deletar o usuário
+        const [results] = await connection.query('DELETE FROM usuarios WHERE user_id = ?', [id]);
+
+        // Verifica se algum registro foi afetado
+        if (results.affectedRows === 0) {
+            return res.status(404).json({ mensagem: 'Usuário não encontrado' });
+        }
+
+        res.json({ mensagem: 'Usuário deletado com sucesso' });
+    } catch (err) {
+        console.error('Erro ao deletar usuário:', err);
         res.status(500).json({ mensagem: 'Erro interno do servidor', detalhes: err.message });
     } finally {
         if (connection) await connection.end();

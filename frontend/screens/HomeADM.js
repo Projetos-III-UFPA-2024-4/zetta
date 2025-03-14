@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Image, FlatList } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, Image, FlatList, Alert } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 
 const HomeADM = () => {
   const navigation = useNavigation();
   const [search, setSearch] = useState('');
-  const [usuarios, setUsuarios] = useState([]); // Estado para armazenar os usuários
-  const [usuariosFiltrados, setUsuariosFiltrados] = useState([]); // Estado para armazenar os usuários filtrados
+  const [usuarios, setUsuarios] = useState([]);
+  const [usuariosFiltrados, setUsuariosFiltrados] = useState([]);
 
   // Função para buscar os usuários do banco de dados
   const buscarUsuarios = async () => {
@@ -26,18 +26,58 @@ const HomeADM = () => {
     }
   };
 
+  // Função para deletar um usuário
+  const deletarUsuario = async (userId) => {
+    try {
+      const response = await fetch(`http://192.168.100.8:5000/deletar-usuario/${userId}`, {
+        method: 'DELETE',
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Erro ao deletar usuário: ${response.status} - ${errorText}`);
+      }
+
+      // Atualiza a lista de usuários após a exclusão
+      buscarUsuarios();
+      Alert.alert('Sucesso', 'Usuário deletado com sucesso!');
+    } catch (error) {
+      console.error('Erro ao deletar usuário:', error);
+      Alert.alert('Erro', 'Não foi possível deletar o usuário.');
+    }
+  };
+
+  // Função para confirmar a exclusão
+  const confirmarExclusao = (userId) => {
+    Alert.alert(
+      'Confirmar Exclusão',
+      'Você tem certeza que deseja deletar este usuário?',
+      [
+        {
+          text: 'Não',
+          style: 'cancel',
+        },
+        {
+          text: 'Sim',
+          onPress: () => deletarUsuario(userId), // Chama a função de deletar se o usuário confirmar
+        },
+      ],
+      { cancelable: true }
+    );
+  };
+
   // Função para filtrar os usuários com base na pesquisa
   const filtrarUsuarios = (texto) => {
-    setSearch(texto); // Atualiza o estado da pesquisa
+    setSearch(texto);
     if (texto) {
       const filtrados = usuarios.filter(
         (usuario) =>
           (usuario.user_id && usuario.user_id.toLowerCase().includes(texto.toLowerCase())) ||
           (usuario.nome && usuario.nome.toLowerCase().includes(texto.toLowerCase()))
       );
-      setUsuariosFiltrados(filtrados); // Atualiza a lista filtrada
+      setUsuariosFiltrados(filtrados);
     } else {
-      setUsuariosFiltrados(usuarios); // Se o campo de pesquisa estiver vazio, exibe todos os usuários
+      setUsuariosFiltrados(usuarios);
     }
   };
 
@@ -64,7 +104,7 @@ const HomeADM = () => {
             style={styles.searchInput}
             placeholder="Digite o nome ou ID do motorista"
             value={search}
-            onChangeText={filtrarUsuarios} // Filtra os usuários conforme o texto digitado
+            onChangeText={filtrarUsuarios}
           />
           <TouchableOpacity style={styles.searchButton} onPress={() => alert(`Buscando: ${search}`)}>
             <Text style={styles.searchButtonText}>Buscar</Text>
@@ -84,7 +124,7 @@ const HomeADM = () => {
           </View>
           <FlatList
             data={usuariosFiltrados}
-            keyExtractor={(item) => item.user_id || Math.random().toString()} // Garante uma chave única
+            keyExtractor={(item) => item.user_id || Math.random().toString()}
             renderItem={({ item }) => (
               <View style={styles.tabelaLinha}>
                 <Text style={styles.linhaText}>{item.user_id || 'N/A'}</Text>
@@ -98,7 +138,7 @@ const HomeADM = () => {
                   </TouchableOpacity>
                   <TouchableOpacity
                     style={styles.acaoButton}
-                    onPress={() => navigation.navigate('ExcluirMotorista', { userId: item.user_id })}
+                    onPress={() => confirmarExclusao(item.user_id)} // Chama a função de confirmar exclusão
                   >
                     <Image source={require('../assets/lixo.png')} style={styles.acaoLixo} />
                   </TouchableOpacity>
@@ -120,6 +160,7 @@ const HomeADM = () => {
   );
 };
 
+// Estilos (mantidos iguais)
 const styles = StyleSheet.create({
   container: {
     flex: 1,
