@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 
-const Historico_USER = () => {
+const HistoricoUSER = () => {
   const [dias, setDias] = useState([
     { 
       dia: 'Segunda', 
@@ -51,7 +51,7 @@ const Historico_USER = () => {
       estiloConducao: 'Moderado',
       kmsRodados: '52 km'
     },
-    // Adicione outros dias...
+    
   ]);
 
   // Função para atualizar o rating
@@ -209,4 +209,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default Historico_USER;
+export default HistoricoUSER;
