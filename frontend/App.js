@@ -7,8 +7,13 @@ import HomeADM from './screens/HomeADM';
 import HomeUSER from './screens/HomeUSER';
 import CadastroMotorista from './screens/CadastroMotorista';
 import ConducaoUSER from './screens/ConducaoUSER';
+import HistoricoUSER from './screens/HistoricoUSER';
+
 import CameraFunction from "./screens/CameraFunction";
-import IA_USER from './screens/IA_USER'; // Importa a tela de condução
+import IA_USER from './screens/IA_USER'; 
+import EditarMotorista from './screens/EditarMotorista';
+import ExcluirMotorista from './screens/ExcluirMotorista';
+import VisualizarMotorista from './screens/VisualizarMotorista';
 
 const Stack = createStackNavigator();
 
@@ -16,7 +21,7 @@ export default function App() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  const backendUrl = 'http://192.168.1.6:5000/login';
+  const backendUrl = 'http://192.168.1.4:5000/login';
 
   const handleLogin = (credentials, navigation) => {
     setLoading(true);
@@ -62,10 +67,14 @@ export default function App() {
           {(props) => <LoginTela {...props} onLogin={(credentials) => handleLogin(credentials, props.navigation)} />}
         </Stack.Screen>
         <Stack.Screen name="HomeADM" component={HomeADM} options={{ title: 'Admin' }} />
+        <Stack.Screen name="EditarMotorista" component={EditarMotorista} />
+        <Stack.Screen name="ExcluirMotorista" component={ExcluirMotorista} />
+        <Stack.Screen name="VisualizarMotorista" component={VisualizarMotorista} />
         <Stack.Screen name="HomeUSER" component={HomeUSER} options={{ title: 'Usuário' }} />
         <Stack.Screen name="CadastroMotorista" component={CadastroMotorista} options={{ title: 'Cadastro Motorista' }} />
         <Stack.Screen name="CameraFunction" component={CameraFunction}/>
         <Stack.Screen name="ConducaoUSER" component={ConducaoUSER} options={{ title: 'Condução' }} />
+        <Stack.Screen name="HistoricoUSER" component={HistoricoUSER} options={{ title: 'Histórico' }} />
         <Stack.Screen name="IA_USER" component={IA_USER} options={{ title: 'IA' }} />
       </Stack.Navigator>
       {error && <Text style={styles.error}>{error}</Text>}
