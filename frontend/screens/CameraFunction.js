@@ -1,38 +1,95 @@
-import React, { useState, useEffect, useRef } from 'react';
 import { CameraView, CameraType, useCameraPermissions } from 'expo-camera';
-import { Button, StyleSheet, Text, TouchableOpacity, View, Image } from 'react-native';
-import * as tf from '@tensorflow/tfjs';
-import * as faceLandmarksDetection from '@tensorflow-models/face-landmarks-detection';
-import Svg, { Line } from 'react-native-svg';
+import { useState, useEffect, useRef } from 'react';
+import { Button, StyleSheet, Text, TouchableOpacity, View, Alert } from 'react-native';
 import * as FileSystem from 'expo-file-system';
+
+const API_URL = 'http://192.168.1.4:5002/detectar_fadiga'; // Substitua pelo IP da sua API
 
 export default function CameraFunction() {
   const [facing, setFacing] = useState('front');
   const [permission, requestPermission] = useCameraPermissions();
-  const [detector, setDetector] = useState(null);
-  const [faces, setFaces] = useState([]);
+  const [resultados, setResultados] = useState(null);
+  const [isCapturing, setIsCapturing] = useState(false); // Estado para controlar a captura automática
   const cameraRef = useRef(null);
 
-  // Carregar o modelo de detecção facial
+  // Solicita permissão para acessar a câmera
   useEffect(() => {
-    const loadModel = async () => {
-      await tf.ready(); // Certifique-se de que o TensorFlow.js está pronto
-      const model = faceLandmarksDetection.SupportedModels.MediaPipeFaceMesh;
-      const detectorConfig = {
-        runtime: 'tfjs', // Usar o runtime do TensorFlow.js
-      };
-      const detector = await faceLandmarksDetection.createDetector(model, detectorConfig);
-      setDetector(detector); // Atualiza o estado do detector
-    };
-
-    loadModel();
+    (async () => {
+      const { status } = await CameraView.requestCameraPermissionsAsync();
+      if (status !== 'granted') {
+        Alert.alert('Permissão necessária', 'Precisamos de acesso à câmera para continuar.');
+      }
+    })();
   }, []);
 
+  // Função para capturar e enviar o frame
+  const capturarEEnviarFrame = async () => {
+    if (cameraRef.current) {
+      try {
+        // Captura a foto
+        const photo = await cameraRef.current.takePictureAsync({ base64: true });
+
+        // Verifica se photo.uri está definido
+        if (!photo.uri) {
+          console.error('Erro: photo.uri não está definido.');
+          return;
+        }
+
+        // Envia a foto para a API
+        const response = await FileSystem.uploadAsync(API_URL, photo.uri, {
+          httpMethod: 'POST',
+          uploadType: FileSystem.FileSystemUploadType.MULTIPART,
+          fieldName: 'image',
+        });
+
+        // Processa a resposta da API
+        if (response && response.body) {
+          const data = JSON.parse(response.body);
+          setResultados(data);
+          console.log(data);
+
+          // Exibe alertas
+          if (data.drowsiness_alert) {
+            Alert.alert('Alerta de Sonolência', 'O motorista parece estar com sono!');
+          }
+          if (data.yawning_alert) {
+            Alert.alert('Alerta de Bocejo', 'O motorista está bocejando!');
+          }
+          if (data.distraction_alert) {
+            Alert.alert('Alerta de Distração', 'O motorista parece distraído!');
+          }
+        } else {
+          console.error('Erro: Resposta da API inválida.');
+        }
+      } catch (error) {
+        console.error('Erro ao enviar o frame:', error);
+      }
+    }
+  };
+
+  // Inicia/para a captura automática de frames
+  const toggleCapturaAutomatica = () => {
+    setIsCapturing((prev) => !prev);
+  };
+
+  // Efeito para captura automática de frames
+  useEffect(() => {
+    let intervalId;
+    if (isCapturing) {
+      intervalId = setInterval(capturarEEnviarFrame, 1000); // Captura e envia frames a cada 1 segundo
+    }
+    return () => {
+      if (intervalId) clearInterval(intervalId); // Limpa o intervalo quando o componente é desmontado ou a captura é parada
+    };
+  }, [isCapturing]);
+
   if (!permission) {
+    // Permissões da câmera ainda estão carregando.
     return <View />;
   }
 
   if (!permission.granted) {
+    // Permissões da câmera não foram concedidas ainda.
     return (
       <View style={styles.container}>
         <Text style={styles.message}>Precisamos de sua permissão para acessar a câmera</Text>
@@ -41,110 +98,33 @@ export default function CameraFunction() {
     );
   }
 
-  const toggleCameraFacing = () => {
-    setFacing(current => (current === 'back' ? 'front' : 'back'));
-  };
-
-  const handleCameraStream = async () => {
-    if (cameraRef.current && detector) {
-      const photo = await cameraRef.current.takePictureAsync({ base64: true });
-      const imageUri = `${FileSystem.documentDirectory}photo.jpg`;
-      await FileSystem.writeAsStringAsync(imageUri, photo.base64, {
-        encoding: FileSystem.EncodingType.Base64,
-      });
-
-      const image = { uri: imageUri };
-      const detectedFaces = await detector.estimateFaces(image);
-      setFaces(detectedFaces);
-    }
-  };
-
-  const renderFaceConnections = () => {
-    return faces.map((face, index) => {
-      const keypoints = face.keypoints;
-
-      // Pontos dos olhos
-      const leftEye = [
-        keypoints[33], keypoints[246], keypoints[161], keypoints[160], keypoints[159],
-        keypoints[158], keypoints[157], keypoints[173], keypoints[133], keypoints[155],
-        keypoints[154], keypoints[153], keypoints[145], keypoints[144], keypoints[163],
-        keypoints[7], keypoints[33]
-      ];
-
-      const rightEye = [
-        keypoints[263], keypoints[388], keypoints[387], keypoints[386], keypoints[385],
-        keypoints[384], keypoints[398], keypoints[362], keypoints[382], keypoints[381],
-        keypoints[380], keypoints[374], keypoints[373], keypoints[390], keypoints[249],
-        keypoints[263]
-      ];
-
-      // Pontos da boca
-      const mouth = [
-        keypoints[61], keypoints[185], keypoints[40], keypoints[39], keypoints[37],
-        keypoints[0], keypoints[267], keypoints[269], keypoints[270], keypoints[409],
-        keypoints[291], keypoints[375], keypoints[321], keypoints[405], keypoints[314],
-        keypoints[17], keypoints[84], keypoints[181], keypoints[91], keypoints[146],
-        keypoints[61]
-      ];
-
-      return (
-        <Svg key={index} style={styles.overlay}>
-          {leftEye.map((point, i) => (
-            <Line
-              key={`leftEye-${i}`}
-              x1={leftEye[i].x}
-              y1={leftEye[i].y}
-              x2={leftEye[(i + 1) % leftEye.length].x}
-              y2={leftEye[(i + 1) % leftEye.length].y}
-              stroke="green"
-              strokeWidth="2"
-            />
-          ))}
-          {rightEye.map((point, i) => (
-            <Line
-              key={`rightEye-${i}`}
-              x1={rightEye[i].x}
-              y1={rightEye[i].y}
-              x2={rightEye[(i + 1) % rightEye.length].x}
-              y2={rightEye[(i + 1) % rightEye.length].y}
-              stroke="green"
-              strokeWidth="2"
-            />
-          ))}
-          {mouth.map((point, i) => (
-            <Line
-              key={`mouth-${i}`}
-              x1={mouth[i].x}
-              y1={mouth[i].y}
-              x2={mouth[(i + 1) % mouth.length].x}
-              y2={mouth[(i + 1) % mouth.length].y}
-              stroke="white"
-              strokeWidth="2"
-            />
-          ))}
-        </Svg>
-      );
-    });
-  };
-
   return (
     <View style={styles.container}>
       <CameraView
         style={styles.camera}
         facing={facing}
         ref={cameraRef}
-        onCameraReady={handleCameraStream}
       >
         <View style={styles.buttonContainer}>
-          <TouchableOpacity style={styles.button} onPress={toggleCameraFacing}>
-            <Text style={styles.text}>Trocar Camera</Text>
+          <TouchableOpacity style={styles.button} onPress={toggleCapturaAutomatica}>
+            <Text style={styles.text}>{isCapturing ? 'Parar Captura' : 'Iniciar Captura'}</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.button} onPress={handleCameraStream}>
-            <Text style={styles.text}>Detectar Rosto</Text>
+          <TouchableOpacity style={styles.button} onPress={() => setFacing(facing === 'back' ? 'front' : 'back')}>
+            <Text style={styles.text}>Trocar Câmera</Text>
           </TouchableOpacity>
         </View>
       </CameraView>
-      {renderFaceConnections()}
+
+      {resultados && (
+        <View style={styles.resultados}>
+          <Text>EAR: {resultados.ear_value.toFixed(2)}</Text>
+          <Text>MAR: {resultados.mar_value.toFixed(2)}</Text>
+          <Text>Orientação: {resultados.orientation_value.toFixed(2)}</Text>
+          <Text>Alerta de Sonolência: {resultados.drowsiness_alert ? 'Sim' : 'Não'}</Text>
+          <Text>Alerta de Bocejo: {resultados.yawning_alert ? 'Sim' : 'Não'}</Text>
+          <Text>Alerta de Distração: {resultados.distraction_alert ? 'Sim' : 'Não'}</Text>
+        </View>
+      )}
     </View>
   );
 }
@@ -166,22 +146,22 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     backgroundColor: 'transparent',
     margin: 64,
+    justifyContent: 'space-between',
   },
   button: {
-    flex: 1,
     alignSelf: 'flex-end',
     alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    padding: 10,
+    borderRadius: 5,
   },
   text: {
-    fontSize: 24,
+    fontSize: 16,
     fontWeight: 'bold',
     color: 'white',
   },
-  overlay: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
+  resultados: {
+    padding: 20,
+    backgroundColor: '#fff',
   },
 });
