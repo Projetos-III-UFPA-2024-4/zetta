@@ -1,43 +1,83 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Image, FlatList } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, Image, FlatList, Alert } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 
 const HomeADM = () => {
   const navigation = useNavigation();
   const [search, setSearch] = useState('');
-  const [usuarios, setUsuarios] = useState([]); // Estado para armazenar os usuários
-  const [usuariosFiltrados, setUsuariosFiltrados] = useState([]); // Estado para armazenar os usuários filtrados
+  const [usuarios, setUsuarios] = useState([]);
+  const [usuariosFiltrados, setUsuariosFiltrados] = useState([]);
 
   // Função para buscar os usuários do banco de dados
   const buscarUsuarios = async () => {
     try {
-        const response = await fetch('http:// 192.168.1.6:5000/usuarios');
-        
-        if (!response.ok) {
-            const errorText = await response.text();
-            throw new Error(`Erro na requisição: ${response.status} - ${errorText}`);
-        }
+      const response = await fetch('http://192.168.1.4:5000/usuarios');
 
-        const data = await response.json();
-        setUsuarios(data);
-        setUsuariosFiltrados(data);
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Erro na requisição: ${response.status} - ${errorText}`);
+      }
+
+      const data = await response.json();
+      setUsuarios(data);
+      setUsuariosFiltrados(data);
     } catch (error) {
-        console.error('Erro ao buscar usuários:', error);
+      console.error('Erro ao buscar usuários:', error);
     }
-};
+  };
+
+  // Função para deletar um usuário
+  const deletarUsuario = async (userId) => {
+    try {
+      const response = await fetch(`http://192.168.1.4:5000/deletar-usuario/${userId}`, {
+        method: 'DELETE',
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Erro ao deletar usuário: ${response.status} - ${errorText}`);
+      }
+
+      // Atualiza a lista de usuários após a exclusão
+      buscarUsuarios();
+      Alert.alert('Sucesso', 'Usuário deletado com sucesso!');
+    } catch (error) {
+      console.error('Erro ao deletar usuário:', error);
+      Alert.alert('Erro', 'Não foi possível deletar o usuário.');
+    }
+  };
+
+  // Função para confirmar a exclusão
+  const confirmarExclusao = (userId) => {
+    Alert.alert(
+      'Confirmar Exclusão',
+      'Você tem certeza que deseja deletar este usuário?',
+      [
+        {
+          text: 'Não',
+          style: 'cancel',
+        },
+        {
+          text: 'Sim',
+          onPress: () => deletarUsuario(userId), // Chama a função de deletar se o usuário confirmar
+        },
+      ],
+      { cancelable: true }
+    );
+  };
 
   // Função para filtrar os usuários com base na pesquisa
   const filtrarUsuarios = (texto) => {
-    setSearch(texto); // Atualiza o estado da pesquisa
+    setSearch(texto);
     if (texto) {
       const filtrados = usuarios.filter(
         (usuario) =>
-          usuario.user_id.toLowerCase().includes(texto.toLowerCase()) ||
-          usuario.nome.toLowerCase().includes(texto.toLowerCase())
+          (usuario.user_id && usuario.user_id.toLowerCase().includes(texto.toLowerCase())) ||
+          (usuario.nome && usuario.nome.toLowerCase().includes(texto.toLowerCase()))
       );
-      setUsuariosFiltrados(filtrados); // Atualiza a lista filtrada
+      setUsuariosFiltrados(filtrados);
     } else {
-      setUsuariosFiltrados(usuarios); // Se o campo de pesquisa estiver vazio, exibe todos os usuários
+      setUsuariosFiltrados(usuarios);
     }
   };
 
@@ -64,7 +104,7 @@ const HomeADM = () => {
             style={styles.searchInput}
             placeholder="Digite o nome ou ID do motorista"
             value={search}
-            onChangeText={filtrarUsuarios} // Filtra os usuários conforme o texto digitado
+            onChangeText={filtrarUsuarios}
           />
           <TouchableOpacity style={styles.searchButton} onPress={() => alert(`Buscando: ${search}`)}>
             <Text style={styles.searchButtonText}>Buscar</Text>
@@ -80,14 +120,35 @@ const HomeADM = () => {
           <View style={styles.tabelaHeader}>
             <Text style={styles.headerText}>ID</Text>
             <Text style={styles.headerText}>Nome</Text>
+            <Text style={styles.headerText}>Ações</Text>
           </View>
           <FlatList
             data={usuariosFiltrados}
-            keyExtractor={(item) => item.user_id}
+            keyExtractor={(item) => item.user_id || Math.random().toString()}
             renderItem={({ item }) => (
               <View style={styles.tabelaLinha}>
-                <Text style={styles.linhaText}>{item.user_id}</Text>
-                <Text style={styles.linhaText}>{item.nome}</Text>
+                <Text style={styles.linhaText}>{item.user_id || 'N/A'}</Text>
+                <Text style={styles.linhaText}>{item.nome || 'N/A'}</Text>
+                <View style={styles.acoesContainer}>
+                  <TouchableOpacity
+                    style={styles.acaoButton}
+                    onPress={() => navigation.navigate('EditarMotorista', { userId: item.user_id })}
+                  >
+                    <Image source={require('../assets/edit.png')} style={styles.acaoEdit} />
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={styles.acaoButton}
+                    onPress={() => confirmarExclusao(item.user_id)} // Chama a função de confirmar exclusão
+                  >
+                    <Image source={require('../assets/lixo.png')} style={styles.acaoLixo} />
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={styles.acaoButton}
+                    onPress={() => navigation.navigate('VisualizarMotorista', { userId: item.user_id })}
+                  >
+                    <Image source={require('../assets/visu.png')} style={styles.acaoVisu} />
+                  </TouchableOpacity>
+                </View>
               </View>
             )}
           />
@@ -99,6 +160,7 @@ const HomeADM = () => {
   );
 };
 
+// Estilos (mantidos iguais)
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -156,7 +218,7 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     top: -100,
     left: -90,
-    color: "#042B3D",
+    color: '#042B3D',
   },
   searchContainer: {
     flexDirection: 'row',
@@ -191,7 +253,7 @@ const styles = StyleSheet.create({
     width: 50,
     height: 50,
     position: 'absolute',
-    bottom: -260,
+    bottom: -320,
     right: 50,
   },
   bolaAzulFinal: {
@@ -230,6 +292,25 @@ const styles = StyleSheet.create({
   },
   linhaText: {
     fontSize: 14,
+  },
+  acoesContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  acaoButton: {
+    marginLeft: 10,
+  },
+  acaoEdit: {
+    width: 18,
+    height: 18,
+  },
+  acaoLixo: {
+    width: 18,
+    height: 18,
+  },
+  acaoVisu: {
+    width: 18,
+    height: 18,
   },
 });
 
