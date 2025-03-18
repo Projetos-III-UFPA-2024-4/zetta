@@ -12,8 +12,8 @@ const LoginTela = ({ navigation }) => {
     }
 
     try {
-      // Substitua pelo IP da sua máquina ou localhost para o simulador
-      const response = await fetch('http://192.168.100.8:5000/login', { 
+      
+      const response = await fetch('http://192.168.1.227:5000/login', { 
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

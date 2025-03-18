@@ -11,7 +11,7 @@ const HomeADM = () => {
   // Função para buscar os usuários do banco de dados
   const buscarUsuarios = async () => {
     try {
-      const response = await fetch('http://192.168.100.8:5000/usuarios');
+      const response = await fetch('http://192.168.1.227:5000/usuarios');
 
       if (!response.ok) {
         const errorText = await response.text();
@@ -29,7 +29,7 @@ const HomeADM = () => {
   // Função para deletar um usuário
   const deletarUsuario = async (userId) => {
     try {
-      const response = await fetch(`http://192.168.100.8:5000/deletar-usuario/${userId}`, {
+      const response = await fetch(`http://192.168.1.227:5000/deletar-usuario/${userId}`, {
         method: 'DELETE',
       });
 
@@ -110,8 +110,8 @@ const HomeADM = () => {
             <Text style={styles.searchButtonText}>Buscar</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.addButton} onPress={() => navigation.navigate('CadastroMotorista')}>
-            <Image source={require('../assets/add.png')} style={styles.addIcon} />
+          <TouchableOpacity style={styles.addIcon} onPress={() => navigation.navigate('CadastroMotorista')}>
+            <Image source={require('../assets/add.png')} style={styles.addButton} />
           </TouchableOpacity>
         </View>
 
@@ -250,11 +250,12 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   addIcon: {
+    bottom: -300,
+    right: 100,
+  },
+  addButton: {
     width: 50,
     height: 50,
-    position: 'absolute',
-    bottom: -320,
-    right: 50,
   },
   bolaAzulFinal: {
     position: 'absolute',
