@@ -1,9 +1,9 @@
 import { CameraView, CameraType, useCameraPermissions } from 'expo-camera';
 import { useState, useEffect, useRef } from 'react';
-import { Button, StyleSheet, Text, TouchableOpacity, View, Alert } from 'react-native';
+import { Button, StyleSheet, Text, TouchableOpacity, View, Alert, AppState } from 'react-native';
 import * as FileSystem from 'expo-file-system';
 
-const API_URL = 'http://192.168.1.4:5002/detectar_fadiga'; // Substitua pelo IP da sua API
+const API_URL = 'http://44.196.219.45:5002/detectar_fadiga'; // Substitua pelo IP da sua API
 
 export default function CameraFunction() {
   const [facing, setFacing] = useState('front');
@@ -11,6 +11,16 @@ export default function CameraFunction() {
   const [resultados, setResultados] = useState(null);
   const [isCapturing, setIsCapturing] = useState(false); // Estado para controlar a captura automática
   const cameraRef = useRef(null);
+
+  // Estados para controlar se os alertas já foram exibidos
+  const [drowsinessAlertShown, setDrowsinessAlertShown] = useState(false);
+  const [distractionAlertShown, setDistractionAlertShown] = useState(false);
+
+  // Contadores
+  const [contadorPiscadas, setContadorPiscadas] = useState(0);
+  const [contadorEAR, setContadorEAR] = useState(0);
+  const [contadorMAR, setContadorMAR] = useState(0);
+  const [contadorOrientacao, setContadorOrientacao] = useState(0);
 
   // Solicita permissão para acessar a câmera
   useEffect(() => {
@@ -48,15 +58,27 @@ export default function CameraFunction() {
           setResultados(data);
           console.log(data);
 
-          // Exibe alertas
-          if (data.drowsiness_alert) {
-            Alert.alert('Alerta de Sonolência', 'O motorista parece estar com sono!');
-          }
-          if (data.yawning_alert) {
-            Alert.alert('Alerta de Bocejo', 'O motorista está bocejando!');
-          }
-          if (data.distraction_alert) {
-            Alert.alert('Alerta de Distração', 'O motorista parece distraído!');
+          // Atualiza os contadores
+          setContadorPiscadas(data.blink_count || 0);
+          setContadorEAR(data.ear_value || 0);
+          setContadorMAR(data.mar_value || 0);
+          setContadorOrientacao(data.orientation_value || 0);
+
+          // Exibe alertas apenas se não estiverem bloqueados
+          if (data.drowsiness_alert && !drowsinessAlertShown) {
+            setDrowsinessAlertShown(true); // Bloqueia o alerta de sonolência imediatamente
+            Alert.alert('Alerta de Sonolência', 'O motorista parece estar com sono!', [
+              { text: 'OK', onPress: () => {
+                setTimeout(() => setDrowsinessAlertShown(false), 10000); // Desbloqueia após 10 segundos
+              }},
+            ]);
+          } else if (data.distraction_alert && !distractionAlertShown) {
+            setDistractionAlertShown(true); // Bloqueia o alerta de distração imediatamente
+            Alert.alert('Alerta de Distração', 'O motorista parece distraído!', [
+              { text: 'OK', onPress: () => {
+                setTimeout(() => setDistractionAlertShown(false), 10000); // Desbloqueia após 10 segundos
+              }},
+            ]);
           }
         } else {
           console.error('Erro: Resposta da API inválida.');
@@ -69,6 +91,15 @@ export default function CameraFunction() {
 
   // Inicia/para a captura automática de frames
   const toggleCapturaAutomatica = () => {
+    if (isCapturing) {
+      // Se a captura está sendo parada, reinicia os contadores
+      setContadorPiscadas(0);
+      setContadorEAR(0);
+      setContadorMAR(0);
+      setContadorOrientacao(0);
+      setDrowsinessAlertShown(false);
+      setDistractionAlertShown(false);
+    }
     setIsCapturing((prev) => !prev);
   };
 
@@ -81,7 +112,25 @@ export default function CameraFunction() {
     return () => {
       if (intervalId) clearInterval(intervalId); // Limpa o intervalo quando o componente é desmontado ou a captura é parada
     };
-  }, [isCapturing]);
+  }, [isCapturing, drowsinessAlertShown, distractionAlertShown]);
+
+  // Monitora o estado do app (primeiro/segundo plano)
+  useEffect(() => {
+    const handleAppStateChange = (nextAppState) => {
+      if (nextAppState === 'background') {
+        // App entrou em segundo plano: pausa a câmera
+        setIsCapturing(false);
+      } else if (nextAppState === 'active') {
+        // App voltou ao primeiro plano: reinicia a câmera
+        setIsCapturing(true);
+      }
+    };
+
+    const subscription = AppState.addEventListener('change', handleAppStateChange);
+    return () => {
+      subscription.remove();
+    };
+  }, []);
 
   if (!permission) {
     // Permissões da câmera ainda estão carregando.
@@ -100,11 +149,17 @@ export default function CameraFunction() {
 
   return (
     <View style={styles.container}>
-      <CameraView
-        style={styles.camera}
-        facing={facing}
-        ref={cameraRef}
-      >
+      {/* Câmera no canto inferior direito */}
+      <View style={styles.cameraContainer}>
+        <CameraView
+          style={styles.camera}
+          facing={facing}
+          ref={cameraRef}
+        />
+      </View>
+
+      {/* Botões e resultados */}
+      <View style={styles.content}>
         <View style={styles.buttonContainer}>
           <TouchableOpacity style={styles.button} onPress={toggleCapturaAutomatica}>
             <Text style={styles.text}>{isCapturing ? 'Parar Captura' : 'Iniciar Captura'}</Text>
@@ -113,18 +168,18 @@ export default function CameraFunction() {
             <Text style={styles.text}>Trocar Câmera</Text>
           </TouchableOpacity>
         </View>
-      </CameraView>
 
-      {resultados && (
-        <View style={styles.resultados}>
-          <Text>EAR: {resultados.ear_value.toFixed(2)}</Text>
-          <Text>MAR: {resultados.mar_value.toFixed(2)}</Text>
-          <Text>Orientação: {resultados.orientation_value.toFixed(2)}</Text>
-          <Text>Alerta de Sonolência: {resultados.drowsiness_alert ? 'Sim' : 'Não'}</Text>
-          <Text>Alerta de Bocejo: {resultados.yawning_alert ? 'Sim' : 'Não'}</Text>
-          <Text>Alerta de Distração: {resultados.distraction_alert ? 'Sim' : 'Não'}</Text>
-        </View>
-      )}
+        {resultados && (
+          <View style={styles.resultados}>
+            <Text>EAR: {contadorEAR.toFixed(2)}</Text>
+            <Text>MAR: {contadorMAR.toFixed(2)}</Text>
+            <Text>Orientação: {contadorOrientacao.toFixed(2)}</Text>
+            <Text>Piscadas: {contadorPiscadas}</Text>
+            <Text>Alerta de Sonolência: {resultados.drowsiness_alert ? 'Sim' : 'Não'}</Text>
+            <Text>Alerta de Distração: {resultados.distraction_alert ? 'Sim' : 'Não'}</Text>
+          </View>
+        )}
+      </View>
     </View>
   );
 }
@@ -138,22 +193,34 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     paddingBottom: 10,
   },
+  cameraContainer: {
+    position: 'absolute', // Posiciona a câmera absolutamente
+    bottom: 20, // Distância do fundo
+    right: 20, // Distância da direita
+    width: 100, // Largura da câmera
+    height: 150, // Altura da câmera
+    borderRadius: 10, // Bordas arredondadas
+    overflow: 'hidden', // Garante que a câmera não ultrapasse os limites
+    zIndex: 1, // Garante que a câmera fique acima de outros elementos
+  },
   camera: {
+    flex: 1, // Ocupa todo o espaço do container
+  },
+  content: {
     flex: 1,
+    justifyContent: 'center',
+    padding: 20,
   },
   buttonContainer: {
-    flex: 1,
     flexDirection: 'row',
-    backgroundColor: 'transparent',
-    margin: 64,
     justifyContent: 'space-between',
+    marginBottom: 20,
   },
   button: {
-    alignSelf: 'flex-end',
-    alignItems: 'center',
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
     padding: 10,
     borderRadius: 5,
+    alignItems: 'center',
   },
   text: {
     fontSize: 16,
@@ -163,5 +230,6 @@ const styles = StyleSheet.create({
   resultados: {
     padding: 20,
     backgroundColor: '#fff',
+    borderRadius: 10,
   },
 });
