@@ -142,18 +142,19 @@ app.get('/ultimo-id/:tipo', async (req, res) => {
 });
 
 // Rota para buscar todos os usuários
-//app.get('/usuarios', async (req, res) => {
-    //const connection = await mysql.createConnection(dbConfig);
-    //try {
-        //const [results] = await connection.query('SELECT user_id, nome FROM usuarios');
-        //res.json(results); // Retorna a lista de usuários
-    //} catch (err) {
-        //console.error('Erro ao buscar usuários:', err);
-        //res.status(500).json({ mensagem: 'Erro interno do servidor', detalhes: err.message });
-    //} finally {
-        //connection.end();
-   // }
-//});
+ app.get('/usuarios', async (req, res) => {
+    const connection = await mysql.createConnection(dbConfig);
+    try {
+        const [results] = await connection.query('SELECT user_id, nome FROM usuarios');
+        res.json(results); // Retorna a lista de usuários
+    } catch (err) {
+        console.error('Erro ao buscar usuários:', err);
+        res.status(500).json({ mensagem: 'Erro interno do servidor', detalhes: err.message });
+    } finally {
+        connection.end();
+    }
+});
+
 
 const PORT = 5000;
 app.listen(PORT, () => {
