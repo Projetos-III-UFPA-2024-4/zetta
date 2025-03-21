@@ -11,7 +11,11 @@ const HomeADM = () => {
   // Função para buscar os usuários do banco de dados
   const buscarUsuarios = async () => {
     try {
+<<<<<<< HEAD
         const response = await fetch('http://192.168.1.120:5000/usuarios');
+=======
+        const response = await fetch('http://192.168.100.190:5000/usuarios');
+>>>>>>> 94c101d4a032fc6af8d095a87076ce0207d77514
         
         if (!response.ok) {
             const errorText = await response.text();
@@ -80,6 +84,7 @@ const HomeADM = () => {
           <View style={styles.tabelaHeader}>
             <Text style={styles.headerText}>ID</Text>
             <Text style={styles.headerText}>Nome</Text>
+            <Text style={styles.headerText}>Ações</Text> {/* Nova coluna para os botões */}
           </View>
           <FlatList
             data={usuariosFiltrados}
@@ -88,6 +93,26 @@ const HomeADM = () => {
               <View style={styles.tabelaLinha}>
                 <Text style={styles.linhaText}>{item.user_id}</Text>
                 <Text style={styles.linhaText}>{item.nome}</Text>
+                <View style={styles.acoesContainer}>
+                  <TouchableOpacity 
+                    style={styles.acaoButton} 
+                    onPress={() => navigation.navigate('EditarMotorista', { userId: item.user_id })}
+                  >
+                    <Image source={require('../assets/edit.png')} style={styles.acaoEdit} />
+                  </TouchableOpacity>
+                  <TouchableOpacity 
+                    style={styles.acaoButton} 
+                    onPress={() => navigation.navigate('ExcluirMotorista', { userId: item.user_id })}
+                  >
+                    <Image source={require('../assets/lixo.png')} style={styles.acaoLixo} />
+                  </TouchableOpacity>
+                  <TouchableOpacity 
+                    style={styles.acaoButton} 
+                    onPress={() => navigation.navigate('VisualizarMotorista', { userId: item.user_id })}
+                  >
+                    <Image source={require('../assets/visu.png')} style={styles.acaoVisu} />
+                  </TouchableOpacity>
+                </View>
               </View>
             )}
           />
@@ -191,7 +216,7 @@ const styles = StyleSheet.create({
     width: 50,
     height: 50,
     position: 'absolute',
-    bottom: -260,
+    bottom: -320,
     right: 50,
   },
   bolaAzulFinal: {
@@ -230,6 +255,17 @@ const styles = StyleSheet.create({
   },
   linhaText: {
     fontSize: 14,
+  },
+  acoesContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  acaoButton: {
+    marginLeft: 10,
+  },
+  acaoEdit: {
+    width: 18,
+    height: 18,
   },
 });
 

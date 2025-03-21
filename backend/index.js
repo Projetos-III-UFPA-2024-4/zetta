@@ -141,12 +141,21 @@ app.get('/ultimo-id/:tipo', async (req, res) => {
     }
 });
 
+<<<<<<< HEAD
 // Rota para buscar todos os usuários
  app.get('/usuarios', async (req, res) => {
     const connection = await mysql.createConnection(dbConfig);
     try {
         const [results] = await connection.query('SELECT user_id, nome FROM usuarios');
         res.json(results); // Retorna a lista de usuários
+=======
+app.get('/usuarios', async (req, res) => {
+    const connection = await mysql.createConnection(dbConfig);
+    try {
+        // Busca apenas os usuários do tipo "user"
+        const [results] = await connection.query('SELECT user_id, nome FROM usuarios WHERE tipo = ?', ['user']);
+        res.json(results); // Retorna a lista de user_id e nome do tipo "user"
+>>>>>>> 94c101d4a032fc6af8d095a87076ce0207d77514
     } catch (err) {
         console.error('Erro ao buscar usuários:', err);
         res.status(500).json({ mensagem: 'Erro interno do servidor', detalhes: err.message });
@@ -154,7 +163,10 @@ app.get('/ultimo-id/:tipo', async (req, res) => {
         connection.end();
     }
 });
+<<<<<<< HEAD
 
+=======
+>>>>>>> 94c101d4a032fc6af8d095a87076ce0207d77514
 
 const PORT = 5000;
 app.listen(PORT, () => {
