@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { LineChart } from 'react-native-chart-kit';
+import { BarChart } from 'react-native-chart-kit';  // Mudando para BarChart
 import { Dimensions } from 'react-native';
 
 const IA_USER = ({ navigation }) => {
@@ -9,7 +9,7 @@ const IA_USER = ({ navigation }) => {
   const [alertas, setAlertas] = useState([
     { descricao: 'Aumentar o uso do cinto de segurança', tipo: 'alerta' },
     { descricao: 'Evitar dirigir entre os horários 2h-4h', tipo: 'alerta' },
-    { descricao: 'Condução imprudente', tipo: 'geral' },
+    { descricao: 'Condução prudente', tipo: 'geral' },
   ]);
 
   const showAlert = () => {
@@ -29,26 +29,34 @@ const IA_USER = ({ navigation }) => {
       {/* Gráfico de Sonolência */}
       <View style={styles.graphContainer}>
         <Text style={styles.graphTitle}>Níveis de Sonolência</Text>
-        <LineChart
+        <BarChart
           data={{
-            labels: ['00h', '04h', '08h', '12h', '16h', '20h', '24h'],
-            datasets: [{ data: sonolenciaData }],
+            labels: ['00h', '04h', '08h', '12h', '16h', '20h','24h',''],
+            datasets: [
+              {
+                data: sonolenciaData,
+                color: (opacity = 1) => `rgba(0, 122, 255, ${opacity})`, // Cor das barras
+                barPercentage: 0.5,  // Tamanho das barras
+              },
+            ],
           }}
-          width={Dimensions.get('window').width - 40} // Largura do gráfico
-          height={200}
+          width={Dimensions.get('window').width - 40} // Largura do gráfico ajustada
+          height={220} // Altura do gráfico
           yAxisLabel="%"
           chartConfig={{
             backgroundColor: '#ffffff',
             backgroundGradientFrom: '#ffffff',
             backgroundGradientTo: '#ffffff',
             decimalPlaces: 0,
-            color: (opacity = 1) => `rgba(0, 122, 255, ${opacity})`,
-            labelColor: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`,
-            propsForDots: { r: '5', strokeWidth: '2', stroke: '#007AFF' },
+            color: (opacity = 1) => `rgba(0, 122, 255, ${opacity})`, // Cor do gráfico
+            labelColor: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`, // Cor dos rótulos
           }}
-          withVerticalLabels={false}
-          withInnerLines={false}
-          bezier
+          verticalLabelRotation={30} // Gira os rótulos no eixo X
+          style={{
+            marginLeft: 10,
+            marginRight: 10,
+            alignSelf: 'center', // Centraliza o gráfico
+          }} 
         />
       </View>
 
@@ -60,7 +68,7 @@ const IA_USER = ({ navigation }) => {
             <Ionicons
               name={alerta.tipo === 'alerta' ? 'alert-circle' : 'information-circle'}
               size={20}
-              color={alerta.tipo === 'alerta' ? '#8BC9DD' : '8BC9DD'}
+              color={alerta.tipo === 'alerta' ? '#FF3B30' : '#4CD964'}
             />
             <Text style={styles.alertText}>{alerta.descricao}</Text>
           </View>
@@ -74,7 +82,7 @@ const IA_USER = ({ navigation }) => {
         </TouchableOpacity>
 
         <TouchableOpacity style={[styles.button, styles.secondaryButton]} onPress={showAlert}>
-          <Text style={[styles.buttonText, styles.secondaryButtonText]}>Recomendações</Text>
+          <Text style={[styles.buttonText, styles.secondaryButtonText]}>Recomendação</Text>
         </TouchableOpacity>
       </View>
     </ScrollView>
@@ -84,7 +92,7 @@ const IA_USER = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#8BC9DD',
+    backgroundColor: '#f2f6f9', // Cor de fundo suave
     padding: 20,
   },
   header: {
@@ -100,61 +108,66 @@ const styles = StyleSheet.create({
   headerText: {
     flex: 1,
     textAlign: 'center',
-    fontSize: 20,
+    fontSize: 22,
     fontWeight: 'bold',
     color: '#333',
   },
   graphContainer: {
-    left: -5,
     backgroundColor: '#FFF',
-    borderRadius: 10,
+    borderRadius: 15,
     padding: 15,
     marginVertical: 20,
-    elevation: 2,
+    elevation: 3, // Sombra suave
   },
   graphTitle: {
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: 'bold',
     marginBottom: 10,
     textAlign: 'center',
+    color: '#007AFF', // Cor do título do gráfico
   },
   alertContainer: {
     backgroundColor: '#FFF',
-    borderRadius: 10,
+    borderRadius: 15,
     padding: 15,
     marginBottom: 20,
-    elevation: 2,
+    elevation: 3, // Sombra suave
   },
   sectionTitle: {
     fontSize: 18,
     fontWeight: 'bold',
     marginBottom: 10,
     textAlign: 'center',
+    color: '#333',
   },
   alertBox: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#F2F2F2',
-    padding: 10,
-    borderRadius: 8,
-    marginBottom: 10,
+    backgroundColor: '#F8F8F8',
+    padding: 12,
+    borderRadius: 10,
+    marginBottom: 12,
   },
   alertText: {
     fontSize: 14,
     color: '#333',
-    marginLeft: 10,
+    marginLeft: 12,
+    flex: 1,
   },
   buttonsContainer: {
     flexDirection: 'row',
-    justifyContent: 'space-around',
+    justifyContent: 'space-between',
+    marginTop: 20,
   },
   button: {
-    flex: 1,
-    backgroundColor: '#007AFF',
+    backgroundColor: '#FF3B30', // Cor vibrante para o botão de alerta
     paddingVertical: 12,
+    paddingHorizontal: 20,
     borderRadius: 8,
     alignItems: 'center',
+    flex: 1,
     marginHorizontal: 5,
+    top: -15
   },
   buttonText: {
     fontSize: 16,
@@ -164,10 +177,11 @@ const styles = StyleSheet.create({
   secondaryButton: {
     backgroundColor: '#FFF',
     borderWidth: 1,
-    borderColor: '#007AFF',
+    borderColor: '#FF3B30',
+    top: -15
   },
   secondaryButtonText: {
-    color: '#007AFF',
+    color: '#FF3B30', // Cor do texto do botão secundário
   },
 });
 
