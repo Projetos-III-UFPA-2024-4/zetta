@@ -122,5 +122,5 @@ def detectar_fadiga():
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.INFO)  # Configuração básica de logging
-    print("API rodando em: http://192.168.1.4:5002/detectar_fadiga")
-    app.run(debug=False, host='192.168.1.4', port=5002)  # Execução do Flask para ser acessível externamente
+    print("API rodando em: http://0.0.0.0:5002/detectar_fadiga")
+    app.run(debug=False, host='0.0.0.0', port=5002)  # Execução do Flask para ser acessível externamente
