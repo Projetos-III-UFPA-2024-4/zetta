@@ -1,40 +1,47 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, Image } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const LoginTela = ({ navigation }) => {
   const [id, setId] = useState('');
   const [password, setPassword] = useState('');
 
   const handleLogin = async () => {
+    // Verifica se os campos estão vazios
     if (id === '' || password === '') {
       Alert.alert('Erro', 'Por favor, preencha todos os campos.');
       return;
     }
 
     try {
-      // Substitua pelo IP da sua máquina ou localhost para o simulador
-      const response = await fetch('http://192.168.100.190:5000/login', { 
+      // Faz a requisição para o servidor
+      const response = await fetch('http://44.196.219.45:5000/login', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ user_id: id, senha: password }),
+        body: JSON.stringify({ user_id: id, senha: password }), // Usa o valor de `id`
       });
 
       const data = await response.json();
 
+      // Verifica se a resposta foi bem-sucedida
       if (response.ok) {
+        // Salva o user_id no AsyncStorage
+        await AsyncStorage.setItem('user_id', id);
 
-        // Navegar para a tela correta com base no tipo de usuário
+        // Navega para a tela correta com base no tipo de usuário
         if (data.redirectTo === '/HomeADM') {
-          navigation.navigate('HomeADM');
+          navigation.navigate('HomeADM', { userId: id }); // Passa o userId como parâmetro
         } else if (data.redirectTo === '/HomeUSER') {
-          navigation.navigate('HomeUSER');
+          navigation.navigate('HomeUSER', { userId: id }); // Passa o userId como parâmetro
         }
       } else {
+        // Exibe uma mensagem de erro se a autenticação falhar
         Alert.alert('Erro', data.mensagem || 'Falha ao autenticar.');
       }
     } catch (error) {
+      // Exibe uma mensagem de erro se houver problemas de conexão
       Alert.alert('Erro', 'Não foi possível conectar ao servidor.');
       console.error(error);
     }

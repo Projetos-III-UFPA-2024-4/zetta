@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Image } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, Image, Modal, Platform } from 'react-native';
 import { Picker } from '@react-native-picker/picker';
-import DatePicker from '@react-native-community/datetimepicker';
+import DateTimePicker from '@react-native-community/datetimepicker';
 
 const CadastroMotorista = ({ navigation }) => {
     const [user_id, setId] = useState('');
@@ -16,11 +16,18 @@ const CadastroMotorista = ({ navigation }) => {
     const [showTipoId, setShowTipoId] = useState(false);
     const [senha, setSenha] = useState(''); // Estado para o campo de senha
 
+      
+    const handleDateChange = (event, selectedDate) => {
+        setShowDataNascimento(false); // Fecha o modal ou o picker
+    if (selectedDate) {
+        setDataNascimento(selectedDate); // Atualiza a data selecionada
+          }
+    };
 
     
     const gerarId = async (tipo) => {
         try {
-            const response = await fetch(`http://192.168.100.190:5000/ultimo-id/${tipo}`);
+            const response = await fetch(`http://44.196.219.45:5000/ultimo-id/${tipo}`);
             const data = await response.json();
             const ultimoId = data.ultimoId || `${tipo === 'admin' ? 'ADM' : 'USER'}0`;
             const ultimoNumero = parseInt(ultimoId.replace(tipo === 'admin' ? 'ADM' : 'USER', ''), 10);
@@ -40,7 +47,7 @@ const CadastroMotorista = ({ navigation }) => {
 
     const verificarIdExistente = async (novoId) => {
         try {
-            const response = await fetch(`http://192.168.100.190:5000/verificar-id/${novoId}`);
+            const response = await fetch(`http://44.196.219.45:5000/verificar-id/${novoId}`);
             const data = await response.json();
             return data.exists;
         } catch (error) {
@@ -69,7 +76,7 @@ const CadastroMotorista = ({ navigation }) => {
         };
     
         try {
-            const response = await fetch('http://192.168.100.190:5000/criar-usuario', {
+            const response = await fetch('http://44.196.219.45:5000/criar-usuario', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -110,42 +117,35 @@ const CadastroMotorista = ({ navigation }) => {
                 onChangeText={setEmailOuNumero}
             />
 
-            <TouchableOpacity onPress={() => setShowDataNascimento(!showDataNascimento)} style={styles.inputB}>
-                <Text style={styles.inputC1}>
-                    {dataNascimento ? `Data de Nascimento: ${dataNascimento.toLocaleDateString()}` : 'Selecione a Data de Nascimento'}
-                </Text>
-            </TouchableOpacity>
-            {showDataNascimento && (
-                <DatePicker
-                    style={styles.datePicker}
-                    value={dataNascimento}
-                    mode="date"
-                    placeholder="Data de Nascimento"
-                    format="DD/MM/YYYY"
-                    minDate="01-01-1900"
-                    maxDate={new Date()}
-                    confirmBtnText="Confirmar"
-                    cancelBtnText="Cancelar"
-                    customStyles={{
-                        dateIcon: {
-                            display: 'none',
-                        },
-                        dateInput: {
-                            borderWidth: 0,
-                            alignItems: 'flex-start',
-                        },
-                        placeholderText: {
-                            color: '#fff',
-                            fontSize: 16,
-                        },
-                        dateText: {
-                            color: '#fff',
-                            fontSize: 16,
-                        },
-                    }}
-                    onChange={(event, selectedDate) => setDataNascimento(selectedDate || dataNascimento)}
-                />
-            )}
+      {/* Botão para abrir o seletor de data */}
+      <TouchableOpacity onPress={() => setShowDataNascimento(true)} style={styles.inputB}>
+        <Text style={styles.inputC1}>
+          {dataNascimento ? `Data de Nascimento: ${dataNascimento.toLocaleDateString()}` : 'Selecione a Data de Nascimento'}
+        </Text>
+      </TouchableOpacity>
+
+      {/* Modal para exibir o DateTimePicker */}
+      {showDataNascimento && (
+        <Modal
+          transparent={true}
+          animationType="slide"
+          visible={showDataNascimento}
+          onRequestClose={() => setShowDataNascimento(false)}
+        >
+          <View style={styles.modalContainer}>
+            <View style={styles.modalContent}>
+              <DateTimePicker
+                value={dataNascimento || new Date()} // Valor inicial (data atual se não houver seleção)
+                mode="date" // Modo de seleção (data)
+                display={Platform.OS === 'ios' ? 'spinner' : 'default'} // Estilo do picker (spinner no iOS)
+                onChange={handleDateChange}
+              />
+            </View>
+          </View>
+        </Modal>
+      )}
+    
+            
 
             {tipoId === 'user' && (
                 <Image source={require('../assets/quadro2.png')} style={styles.quadroImage2} /> 
@@ -159,7 +159,7 @@ const CadastroMotorista = ({ navigation }) => {
                 <View style={styles.pickerContainer}>
                     <Picker
                         selectedValue={tipoId}
-                        style={styles.picker1}
+                        style={styles.picker}
                         onValueChange={(itemValue) => setTipoId(itemValue)}
                         itemStyle={{ fontSize: 18, color: '#fff' }}
                     >
@@ -173,23 +173,24 @@ const CadastroMotorista = ({ navigation }) => {
             {tipoId === 'user' && (
                 <>
                     {/* Campo Tipo de Carteira */}
-                    <TouchableOpacity onPress={() => setShowTipoCarteira(!showTipoCarteira)} style={styles.inputD1}>
+                    <TouchableOpacity onPress={() => setShowTipoCarteira(!showTipoCarteira)} style={styles.inputE1}>
                         <Text style={styles.inputC2}>
-                            {tipoCarteira ? `Tipo de Carteira: ${tipoCarteira}` : 'Selecione o Tipo de Carteira'}
+                            {tipoCarteira ? `Tipo de Veículo: ${tipoCarteira}` : 'Selecione o Tipo de Veículo'}
                         </Text>
                     </TouchableOpacity>
                     {showTipoCarteira && (
-                        <View style={styles.pickerContainer2}>
+                        <View style={styles.pickerContainer}>
                             <Picker
-                                selectedValue={tipoCarteira}
-                                style={styles.picker}
-                                onValueChange={(itemValue) => setTipoCarteira(itemValue)}
-                                itemStyle={{ fontSize: 18, color: '#fff' }}
+                            selectedValue={tipoCarteira}
+                            style={styles.picker}
+                            onValueChange={(itemValue) => setTipoCarteira(itemValue)}
                             >
-                                <Picker.Item label="Tipo A" value="A" />
-                                <Picker.Item label="Tipo B" value="B" />
-                                <Picker.Item label="Tipo C" value="C" />
-                                <Picker.Item label="Tipo D" value="D" />
+                                <Picker.Item label="2 Eixos" value="A" />
+                                <Picker.Item label="3 Eixos" value="B" />
+                                <Picker.Item label="Cavalo Trucado" value="C" />
+                                <Picker.Item label="Bitrem" value="D" />
+                                <Picker.Item label="Tritrem" value="E" />
+                                <Picker.Item label="Rodotrem" value="F" />
                             </Picker>
                         </View>
                     )}
@@ -293,16 +294,10 @@ const styles = StyleSheet.create({
         marginBottom: 10,
     },
     inputD: {
-        
         position: 'absolute',
         width: '80%',
         marginBottom: 20,
         top: 330,
-    },
-    inputD1: {
-        width: '80%',
-        marginBottom: 20,
-        top: 20,
     },
     inputE: {
         position: 'absolute',
@@ -312,6 +307,14 @@ const styles = StyleSheet.create({
         borderBottomColor: '#fff',
         marginBottom: 20,
         top: 460,
+        color: '#fff',
+    },  
+    inputE1: {
+        position: 'absolute',
+        padding: 10,
+        width: '80%',
+        marginBottom: 20,
+        top: 410,
         color: '#fff',
     },
     inputF1: {
@@ -337,24 +340,19 @@ const styles = StyleSheet.create({
         color: '#fff',
     },
     datePicker: {
-        width: '70%',
+        width: '80%',
         marginBottom: -35,
         left: 85,
         top: -90,
     },
     pickerContainer: {
-        width: '60%',
-        marginBottom: 1,
-        left: -65,
-        top: 0,
-    },
-    pickerContainer2: {
         position: 'absolute',
-        width: '30%',
-        marginBottom: 1,
-        left: 270,
-        top: 320,
-    },
+        top: 100,
+        left: 0,
+        right: 0,
+        backgroundColor: '#fff',
+        zIndex: 1000,
+      },
     picker1: {
         color: '#fff',
         height: 0,
