@@ -11,11 +11,7 @@ const HomeADM = () => {
   // Função para buscar os usuários do banco de dados
   const buscarUsuarios = async () => {
     try {
-<<<<<<< HEAD
-        const response = await fetch('http://192.168.1.120:5000/usuarios');
-=======
-        const response = await fetch('http://192.168.100.190:5000/usuarios');
->>>>>>> 94c101d4a032fc6af8d095a87076ce0207d77514
+        const response = await fetch('http://44.196.219.45:5000/usuarios');
         
         if (!response.ok) {
             const errorText = await response.text();
