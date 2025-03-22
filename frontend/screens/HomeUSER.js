@@ -17,15 +17,13 @@ const HomeUSER = ({ navigation }) => {
       <View style={styles.bolaAzulClaro} />
       <View style={styles.bolaAzul} />
       <Text style={styles.headerText}>Iniciar Viagem</Text>
-      <Text style={styles.viagemText}>Tempo:                   00:00 horas</Text>
-      <Text style={styles.distanciaText}>Distância:              0.7km</Text>
-      <Text style={styles.sonolenciaText}>Sonolência </Text>
-      <Text style={styles.velocidadeText}>Velocidade média </Text>
+      <Text style={styles.viagemText}>Tempo:                00:00 horas</Text>
+      <Text style={styles.distanciaText}>Distância:                 0.7km</Text>
+      <Text style={styles.sonolenciaText}>Sonolência</Text>
+      <Text style={styles.velocidadeText}>Velocidade</Text>
+      <Text style={styles.mediaText}>média </Text>
       <Text style={styles.geral}>GERAL:</Text>
       <Text style={styles.comportamentoText}>Comportamento tranquilo</Text>
-
-
-
 
 
       <Image source={require('../assets/cima.png')} style={styles.cima} />
@@ -36,10 +34,8 @@ const HomeUSER = ({ navigation }) => {
       <Image source={require('../assets/meio1.png')} style={styles.barradenavegacao} />
       <Image source={require('../assets/icon_conducao.png')} style={styles.icon_cond} />
       <Image source={require('../assets/icon_carro.png')} style={styles.icon_car} />
-      <Image source={require('../assets/icon_ia.png')} style={styles.icon_ia} />
-      
+      <Image source={require('../assets/icon_ia.png')} style={styles.icon_ia} />      
 
-      <Text style={styles.carro}>Histórico</Text>
 
       {/* Botão para Navegação para ConducaoUSER */}
       <TouchableOpacity
@@ -115,25 +111,25 @@ const styles = StyleSheet.create({
     top: 239,
   },
   meio1: {
-    left: 30,
+    left: 56,
     position: 'absolute',
-    width: 141,
+    width: 145,
     borderTopLeftRadius: 10,
     borderBottomLeftRadius: 10,
     height: 90,
     top: 340,
   },
   meio2: {
-    left: 190,
+    left: 211,
     position: 'absolute',
-    width: 141,
+    width: 145,
     borderTopRightRadius: 10,
     borderBottomRightRadius: 10,
     height: 90,
     top: 340,
   },
   baixo: {
-    left: 29,
+    left: 56,
     position: 'absolute',
     width: 300,
     borderBottomLeftRadius: 50,
@@ -142,55 +138,55 @@ const styles = StyleSheet.create({
     top: 440,
   },
   icon_cond: {
-    left: 40,
+    left: 64,
     position: 'absolute',
     width: 30,
     height: 30,
-    top: 608,
+    top: 729,
   },
   icon_car: {
-    left: 162,
+    left: 181,
     position: 'absolute',
     width: 65,
     height: 44,
-    top: 600,
+    top: 722,
   },
   icon_ia: {
-    left: 300,
+    left: 323,
     position: 'absolute',
     width: 30,
     height: 30,
-    top: 606,
+    top: 730,
   },
   headerText: {
     fontSize: 24,
     fontWeight: 'bold',
     marginBottom: 20,
-    top: -50,
+    top: -118,
     color: '#FFF',
   },
   viagemText: {
     position: 'absolute', // Posicionamento absoluto
-    left: 50, // Ajuste horizontal
-    top: 255, // Ajuste vertical
-    fontSize: 20,
+    left: 80, // Ajuste horizontal
+    top: 254, // Ajuste vertical
+    fontSize: 18,
     fontWeight: 'bold',
     color: '#FFF',
     zIndex: 2, // Garante que o texto fique sobre a imagem
   },
   distanciaText: {
     position: 'absolute', // Posicionamento absoluto
-    left: 50, // Ajuste horizontal
+    left: 80, // Ajuste horizontal
     top: 290, // Ajuste vertical
-    fontSize: 20,
+    fontSize: 18,
     fontWeight: 'bold',
     color: '#FFF',
     zIndex: 2, // Garante que o texto fique sobre a imagem
   },
   sonolenciaText: {
     position: 'absolute', // Posicionamento absoluto
-    left: 50, // Ajuste horizontal
-    top: 360, // Ajuste vertical
+    left: 76, // Ajuste horizontal
+    top: 370, // Ajuste vertical
     fontSize: 18,
     fontWeight: 'bold',
     color: '#FFF',
@@ -198,8 +194,17 @@ const styles = StyleSheet.create({
   },
   velocidadeText: {
     position: 'absolute', // Posicionamento absoluto
-    left: 200, // Ajuste horizontal
-    top: 360, // Ajuste vertical
+    left: 239, // Ajuste horizontal
+    top: 359, // Ajuste vertical
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#FFF',    
+    zIndex: 2, // Garante que o texto fique sobre a imagem
+  },
+  mediaText: {
+    position: 'absolute', // Posicionamento absoluto
+    left: 259, // Ajuste horizontal
+    top: 385, // Ajuste vertical
     fontSize: 16,
     fontWeight: 'bold',
     color: '#FFF',    
@@ -207,7 +212,7 @@ const styles = StyleSheet.create({
   },
   geral: {
     position: 'absolute', // Posicionamento absoluto
-    left: 50, // Ajuste horizontal
+    left: 76, // Ajuste horizontal
     top: 450, // Ajuste vertical
     fontSize: 20,
     fontWeight: 'bold',
@@ -216,33 +221,18 @@ const styles = StyleSheet.create({
   },
   comportamentoText: {
     position: 'absolute', // Posicionamento absoluto
-    left: 50, // Ajuste horizontal
+    left: 76, // Ajuste horizontal
     top: 480, // Ajuste vertical
     fontSize: 20,
     fontWeight: 'bold',
     color: '#FFF',
     zIndex: 2, // Garante que o texto fique sobre a imagem
   },
-  alerta: {
-    position: 'absolute', // Posicionamento absoluto
-    left: 171, // Ajuste horizontal
-    top: 469, // Ajuste vertical
-    fontSize: 20, // Tamanho da fonte
-    color: '#FFF', // Cor do texto
-    fontWeight: 'bold', // Peso da fonte (negrito)
-  },
-  carro: {
-    left: 0,
-    fontSize: 15,
-    marginBottom: 20,
-    top: 453,
-    color: '#FFF',
-  },
   button: {
     padding: 10,
     borderRadius: 5,
     marginBottom: 20,
-    top: 366,
+    top: 455,
     left: 10,
   },
   buttonText: {
@@ -253,7 +243,7 @@ const styles = StyleSheet.create({
     padding: 10,
     borderRadius: 5,
     marginBottom: 20,
-    top: 305,
+    top: 390,
     left: -125,
   },
   buttonhistoricotext: {
@@ -264,7 +254,7 @@ const styles = StyleSheet.create({
     padding: 10,
     borderRadius: 5,
     marginBottom: 20,
-    top: 241,
+    top: 325,
     left: 133,
   },
   buttoniatext: {
@@ -285,7 +275,7 @@ barradenavegacao: {
   left: 0,
   width: 412,
   height: 70,
-  top: 600,
+  top: 724,
 },
 });
 export default HomeUSER;
