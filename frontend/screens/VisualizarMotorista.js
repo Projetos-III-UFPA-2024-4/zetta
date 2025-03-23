@@ -56,13 +56,13 @@ const VisualizarMotorista = () => {
       // Verifica se o termo de pesquisa está presente em qualquer campo
       return (
         formatarData(item.data).toLowerCase().includes(termoLowerCase) || // Data
-        item.velocidadeMedia.toString().toLowerCase().includes(termoLowerCase) || // Velocidade Média
-        item.maiorVelocidade.toString().toLowerCase().includes(termoLowerCase) || // Maior Velocidade
-        item.vezesAcimaLimite.toString().toLowerCase().includes(termoLowerCase) || // Vezes acima de 90 km/h
-        item.total_sono.toString().toLowerCase().includes(termoLowerCase) || // Total Sono
-        item.total_dist.toString().toLowerCase().includes(termoLowerCase) || // Total Distração
-        item.media_orient.toString().toLowerCase().includes(termoLowerCase) || // Média Orientação
-        item.classificacao.toLowerCase().includes(termoLowerCase) || // Classificação
+        (item.velocidadeMedia?.toString() || '').toLowerCase().includes(termoLowerCase) || // Velocidade Média
+        (item.maiorVelocidade?.toString() || '').toLowerCase().includes(termoLowerCase) || // Maior Velocidade
+        (item.vezesAcimaLimite?.toString() || '').toLowerCase().includes(termoLowerCase) || // Vezes acima de 90 km/h
+        (item.total_sono?.toString() || '').toLowerCase().includes(termoLowerCase) || // Total Sono
+        (item.total_dist?.toString() || '').toLowerCase().includes(termoLowerCase) || // Total Distração
+        (item.media_orient?.toString() || '').toLowerCase().includes(termoLowerCase) || // Média Orientação
+        (item.classificacao?.toLowerCase() || '').includes(termoLowerCase) || // Classificação
         formatarHorario(item.horario_inicio).toLowerCase().includes(termoLowerCase) || // Horário Início
         formatarHorario(item.horario_termino).toLowerCase().includes(termoLowerCase) // Horário Término
       );
@@ -109,18 +109,18 @@ const VisualizarMotorista = () => {
             </View>
 
             <View style={styles.metricaItem}>
-              <Text style={styles.metricaTitulo}>Vezes acima de 90 km/h</Text>
-              <Text style={styles.metricaValor}>{item.vezesAcimaLimite}</Text>
+              <Text style={styles.metricaTitulo}>Excesso de Velocidade</Text>
+              <Text style={styles.metricaValor}>{item.vezesAcimaLimite || 0}</Text>
             </View>
 
             <View style={styles.metricaItem}>
               <Text style={styles.metricaTitulo}>Total Sono</Text>
-              <Text style={styles.metricaValor}>{item.total_sono}</Text>
+              <Text style={styles.metricaValor}>{item.total_sono || 0}</Text>
             </View>
 
             <View style={styles.metricaItem}>
               <Text style={styles.metricaTitulo}>Total Distração</Text>
-              <Text style={styles.metricaValor}>{item.total_dist}</Text>
+              <Text style={styles.metricaValor}>{item.total_dist || 0}</Text>
             </View>
 
             <View style={styles.metricaItem}>
@@ -146,7 +146,7 @@ const VisualizarMotorista = () => {
 
             <View style={styles.metricaItem}>
               <Text style={styles.metricaTitulo}>Classificação</Text>
-              <Text style={styles.metricaValor}>{item.classificacao}</Text>
+              <Text style={styles.metricaValor}>{item.classificacao || 'N/A'}</Text>
             </View>
           </View>
         </View>

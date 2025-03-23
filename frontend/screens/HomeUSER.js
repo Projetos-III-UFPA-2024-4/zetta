@@ -107,7 +107,7 @@ const HomeUSER = () => {
 
       <View style={styles.bolaAzulClaro} />
       <View style={styles.bolaAzul} />
-      <Text style={styles.headerText}>Iniciar Viagem</Text>
+      <Text style={styles.headerText}></Text>
       <Text style={styles.viagemText}>Tempo: {ultimaCorrida.duracao} horas</Text>
       <Text style={styles.distanciaText}>Velocidade Média: {ultimaCorrida.velocidadeMedia}</Text>
       <Text style={styles.sonolenciaText}>Maior Velocidade: {ultimaCorrida.maiorVelocidade}</Text>
@@ -167,7 +167,6 @@ const styles = StyleSheet.create({
     top: 239,
   },
   meio1: {
-    left: 30,
     position: 'absolute',
     width: 300,
     borderTopLeftRadius: 10,
@@ -178,7 +177,6 @@ const styles = StyleSheet.create({
     top: 340,
   },
   baixo: {
-    left: 29,
     position: 'absolute',
     width: 300,
     borderBottomLeftRadius: 50,
@@ -195,7 +193,6 @@ const styles = StyleSheet.create({
   },
   viagemText: {
     position: 'absolute',
-    left: 50,
     top: 255,
     fontSize: 20,
     fontWeight: 'bold',
@@ -204,7 +201,6 @@ const styles = StyleSheet.create({
   },
   distanciaText: {
     position: 'absolute',
-    left: 50,
     top: 290,
     fontSize: 20,
     fontWeight: 'bold',
@@ -213,25 +209,22 @@ const styles = StyleSheet.create({
   },
   sonolenciaText: {
     position: 'absolute',
-    left: 50,
     top: 360,
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: 'bold',
     color: '#FFF',
     zIndex: 2,
   },
   velocidadeText: {
     position: 'absolute',
-    left: 50,
     top: 390,
-    fontSize: 16,
+    fontSize: 20,
     fontWeight: 'bold',
     color: '#FFF',
     zIndex: 2,
   },
   classificacaoText: {
     position: 'absolute',
-    left: 100,
     top: 480,
     fontSize: 20,
     fontWeight: 'bold',
@@ -240,7 +233,7 @@ const styles = StyleSheet.create({
   },
   geral: {
     position: 'absolute',
-    left: 50,
+    left: 70,
     top: 450,
     fontSize: 20,
     fontWeight: 'bold',
@@ -250,9 +243,9 @@ const styles = StyleSheet.create({
   barradenavegacao: {
     position: 'absolute',
     left: 0,
-    width: 412,
+    width: 502,
     height: 70,
-    top: 600,
+    top: 733,
   },
   errorText: {
     color: 'red',

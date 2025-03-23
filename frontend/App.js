@@ -7,6 +7,7 @@ import HomeADM from './screens/HomeADM';
 import HomeUSER from './screens/HomeUSER';
 import CadastroMotorista from './screens/CadastroMotorista';
 import CameraFunction from './screens/CameraFunction';
+import Velocidade from './screens/Velocidade';
 import EditarMotorista from './screens/EditarMotorista';
 import VisualizarMotorista from './screens/VisualizarMotorista';
 
@@ -66,6 +67,7 @@ export default function App() {
         <Stack.Screen name="HomeADM" component={HomeADM} options={{ title: 'Admin' }} />
         <Stack.Screen name="EditarMotorista" component={EditarMotorista} />
         <Stack.Screen name="VisualizarMotorista" component={VisualizarMotorista} />
+        <Stack.Screen name="Velocidade" component={Velocidade} />
         <Stack.Screen name="HomeUSER" component={HomeUSER} options={{ title: 'Usuário' }} />
         <Stack.Screen name="CadastroMotorista" component={CadastroMotorista} options={{ title: 'Cadastro Motorista' }} />
         <Stack.Screen name="CameraFunction" component={CameraFunction} />

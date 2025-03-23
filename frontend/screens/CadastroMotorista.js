@@ -25,26 +25,43 @@ const CadastroMotorista = ({ navigation }) => {
     };
 
     
+// Função para gerar o próximo ID
     const gerarId = async (tipo) => {
         try {
             const response = await fetch(`http://44.196.219.45:5000/ultimo-id/${tipo}`);
             const data = await response.json();
-            const ultimoId = data.ultimoId || `${tipo === 'admin' ? 'ADM' : 'USER'}0`;
-            const ultimoNumero = parseInt(ultimoId.replace(tipo === 'admin' ? 'ADM' : 'USER', ''), 10);
+            const ultimoId = data.ultimoId || `${tipo === 'admin' ? 'ADM' : 'USER'}0`; // Caso não haja IDs, comece com USER0 ou ADM0
+
+            // Extrai o número do último ID
+            const prefixo = tipo === 'admin' ? 'ADM' : 'USER';
+            const ultimoNumero = parseInt(ultimoId.replace(prefixo, ''), 10);
+
+            // Verifica se o número foi extraído corretamente
+            if (isNaN(ultimoNumero)) {
+                console.error('Erro ao extrair número do último ID:', ultimoId);
+                return `${prefixo}1`; // Retorna USER1 ou ADM1 em caso de erro
+            }
+
+            // Incrementa o número
             const novoNumero = ultimoNumero + 1;
-            return `${tipo === 'admin' ? 'ADM' : 'USER'}${novoNumero}`;
+
+            // Retorna o novo ID no formato USERX ou ADMX
+            return `${prefixo}${novoNumero}`;
         } catch (error) {
             console.error('Erro ao gerar ID:', error);
-            return `${tipo === 'admin' ? 'ADM' : 'USER'}1`;
+            return `${tipo === 'admin' ? 'ADM' : 'USER'}1`; // Retorna USER1 ou ADM1 em caso de erro
         }
     };
 
+    // Gera o ID quando o tipo de usuário é selecionado
     useEffect(() => {
         if (tipoId) {
             gerarId(tipoId).then(id => setId(id));
         }
     }, [tipoId]);
 
+
+    // Verifica se o ID já existe no banco de dados
     const verificarIdExistente = async (novoId) => {
         try {
             const response = await fetch(`http://44.196.219.45:5000/verificar-id/${novoId}`);
