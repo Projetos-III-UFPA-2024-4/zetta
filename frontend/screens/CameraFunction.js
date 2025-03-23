@@ -4,6 +4,8 @@ import { CameraView, useCameraPermissions } from 'expo-camera';
 import * as Location from 'expo-location';
 import { useNavigation } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as FileSystem from 'expo-file-system';
+import { Audio } from 'expo-av';
 
 const API_URL = 'http://44.196.219.45:5002/detectar_fadiga'; // Substitua pelo IP da sua API
 
@@ -22,6 +24,13 @@ const CameraFunction = () => {
   const locationSubscriptionRef = useRef(null);
   const intervaloRef = useRef(null);
   const navigation = useNavigation();
+  const soundRef = useRef(null);
+  const [lastAlertTime, setLastAlertTime] = useState({
+    drowsiness: 0,
+    distraction: 0,
+    yawning: 0,
+  });
+  const capturaIntervalRef = useRef(null);
 
   // Recupera o user_id do AsyncStorage ao carregar o componente
   useEffect(() => {
@@ -41,50 +50,148 @@ const CameraFunction = () => {
     getUserId();
   }, []);
 
-  // Solicita permissão para acessar a câmera
+  // Solicita permissão para acessar a câmera e localização
   useEffect(() => {
     (async () => {
-      const { status } = await CameraView.requestCameraPermissionsAsync();
-      if (status !== 'granted') {
-        Alert.alert('Permissão necessária', 'Precisamos de acesso à câmera para continuar.');
+      const { status: cameraStatus } = await CameraView.requestCameraPermissionsAsync();
+      const { status: locationStatus } = await Location.requestForegroundPermissionsAsync();
+      if (cameraStatus !== 'granted' || locationStatus !== 'granted') {
+        Alert.alert('Permissão necessária', 'Precisamos de acesso à câmera e localização para continuar.');
       }
     })();
   }, []);
 
-  // Função para iniciar o monitoramento de velocidade
-  const iniciarMonitoramentoVelocidade = async () => {
-    const { status } = await Location.requestForegroundPermissionsAsync();
-    if (status !== 'granted') {
-      setErrorMsg('Permissão para acessar a localização foi negada');
-      return;
+  // Carrega o som ao iniciar o componente
+  useEffect(() => {
+    (async () => {
+      const { sound } = await Audio.Sound.createAsync(
+        require('../assets/alarm.wav') // Caminho para o arquivo de som
+      );
+      soundRef.current = sound;
+    })();
+
+    // Limpa o som ao desmontar o componente
+    return () => {
+      if (soundRef.current) {
+        soundRef.current.unloadAsync();
+      }
+    };
+  }, []);
+
+  // Função para reproduzir o som de alarme
+  const playAlarm = async () => {
+    if (soundRef.current) {
+      await soundRef.current.replayAsync();
+    }
+  };
+
+  // Função para capturar e enviar o frame
+  const capturarEEnviarFrame = async () => {
+    if (cameraRef.current && isCapturing) {
+      try {
+        // Captura a foto com qualidade reduzida e sem som
+        const photo = await cameraRef.current.takePictureAsync({
+          base64: true,
+          quality: 0.5,
+          mute: true,
+        });
+
+        if (!photo.uri) {
+          console.error('Erro: photo.uri não está definido.');
+          return;
+        }
+
+        // Adiciona um timestamp ao frame
+        const timestamp = Date.now();
+
+        // Envia a foto para a API
+        const response = await FileSystem.uploadAsync(API_URL, photo.uri, {
+          httpMethod: 'POST',
+          uploadType: FileSystem.FileSystemUploadType.MULTIPART,
+          fieldName: 'image',
+          headers: {
+            'Timestamp': timestamp.toString(), // Envia o timestamp no cabeçalho
+          },
+        });
+
+        // Processa a resposta da API
+        if (isCapturing && response && response.body) {
+          const data = JSON.parse(response.body);
+          console.log(data);
+
+          const now = Date.now();
+
+          // Prioridade: Sonolência > Distração > Bocejo
+          if (data.drowsiness_alert && now - lastAlertTime.drowsiness >= 10000) {
+            Alert.alert('Alerta de Sonolência', 'O motorista parece estar com sono!');
+            setLastAlertTime((prev) => ({ ...prev, drowsiness: now }));
+            playAlarm();
+          } else if (data.distraction_alert && now - lastAlertTime.distraction >= 10000) {
+            Alert.alert('Alerta de Distração', 'O motorista parece distraído!');
+            setLastAlertTime((prev) => ({ ...prev, distraction: now }));
+            playAlarm();
+          } else if (data.yawning_alert && now - lastAlertTime.yawning >= 10000) {
+            Alert.alert('Alerta de Bocejo', 'O motorista está bocejando!');
+            setLastAlertTime((prev) => ({ ...prev, yawning: now }));
+          }
+        }
+      } catch (error) {
+        console.error('Erro ao enviar o frame:', error);
+      }
+    }
+  };
+
+  // Efeito para captura automática de frames
+  useEffect(() => {
+    if (isCapturing) {
+      capturaIntervalRef.current = setInterval(capturarEEnviarFrame, 1000); // Captura e envia frames a cada 1 segundo
+    } else {
+      if (capturaIntervalRef.current) {
+        clearInterval(capturaIntervalRef.current);
+        capturaIntervalRef.current = null;
+      }
     }
 
-    locationSubscriptionRef.current = await Location.watchPositionAsync(
-      {
-        accuracy: Location.Accuracy.High,
-        timeInterval: 1000, // Atualiza a cada segundo
-        distanceInterval: 1, // Atualiza se o usuário mover 1 metro
-      },
-      (location) => {
-        const speed = location.coords.speed;
-
-        // Verifique se a velocidade não é null ou NaN
-        if (speed != null && !isNaN(speed)) {
-          const velocidadeKmh = speed * 3.6; // Converte m/s para km/h
-          setVelocidade(velocidadeKmh);
-
-          // Atualiza a maior velocidade captada
-          if (velocidadeKmh > maior_velocidade) {
-            setMaiorVelocidade(velocidadeKmh);
-          }
-
-          // Adiciona a velocidade ao array de dados para o gráfico
-          setDadosGrafico((prevDados) => [...prevDados, velocidadeKmh]);
-        } else {
-          console.warn("Velocidade não capturada corretamente");
-        }
+    return () => {
+      if (capturaIntervalRef.current) {
+        clearInterval(capturaIntervalRef.current);
       }
-    );
+    };
+  }, [isCapturing]);
+
+  // Função para iniciar o monitoramento de velocidade
+  const iniciarMonitoramentoVelocidade = async () => {
+    try {
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== 'granted') {
+        setErrorMsg('Permissão para acessar a localização foi negada');
+        return;
+      }
+
+      locationSubscriptionRef.current = await Location.watchPositionAsync(
+        {
+          accuracy: Location.Accuracy.High,
+          timeInterval: 1000,
+          distanceInterval: 1,
+        },
+        (location) => {
+          const speed = location.coords.speed;
+          if (speed != null && !isNaN(speed)) {
+            const velocidadeKmh = speed * 3.6;
+            setVelocidade(velocidadeKmh);
+            if (velocidadeKmh > maior_velocidade) {
+              setMaiorVelocidade(velocidadeKmh);
+            }
+            setDadosGrafico((prevDados) => [...prevDados, velocidadeKmh]);
+          } else {
+            console.warn("Velocidade não capturada corretamente");
+          }
+        }
+      );
+    } catch (error) {
+      console.error('Erro ao iniciar o monitoramento de velocidade:', error);
+      setErrorMsg('Erro ao monitorar a velocidade');
+    }
   };
 
   // Função para parar o monitoramento de velocidade
@@ -131,11 +238,26 @@ const CameraFunction = () => {
         horario_termino: termino,
         duracao,
         dadosGrafico,
-        timestamp: new Date().toISOString(), // Adiciona o timestamp atual
+        timestamp: new Date().toISOString(),
       });
     }
     setIsCapturing((prev) => !prev);
   };
+
+  // Limpeza de recursos ao desmontar o componente
+  useEffect(() => {
+    return () => {
+      if (intervaloRef.current) {
+        clearInterval(intervaloRef.current);
+      }
+      if (locationSubscriptionRef.current) {
+        locationSubscriptionRef.current.remove();
+      }
+      if (soundRef.current) {
+        soundRef.current.unloadAsync();
+      }
+    };
+  }, []);
 
   if (!permission) {
     return <View />;
@@ -156,10 +278,11 @@ const CameraFunction = () => {
         style={styles.camera}
         facing="front"
         ref={cameraRef}
+        mute={true}
       >
         <View style={styles.buttonContainer}>
-          <TouchableOpacity style={styles.button} onPress={toggleCapturaAutomatica}>
-            <Text style={styles.text}>{isCapturing ? 'Parar Captura' : 'Iniciar Captura'}</Text>
+          <TouchableOpacity style={[styles.button, isCapturing && styles.buttonActive]} onPress={toggleCapturaAutomatica}>
+            <Text style={styles.text}>{isCapturing ? 'Encerrar Viagem' : 'Iniciar Viagem'}</Text>
           </TouchableOpacity>
         </View>
       </CameraView>
@@ -181,10 +304,16 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: 20,
   },
+  message: {
+    textAlign: 'center',
+    paddingBottom: 10,
+    color: '#333',
+    fontSize: 16,
+  },
   camera: {
     width: '100%',
     height: 400,
-    borderRadius: 15,
+    borderRadius: 40,
     borderColor: '#0097a7',
     borderWidth: 2,
     marginBottom: 20,
@@ -206,6 +335,9 @@ const styles = StyleSheet.create({
     elevation: 5,
     height: 45,
     top: 320,
+  },
+  buttonActive: {
+    backgroundColor: '#ff4444', // Cor diferente quando a captura está ativa
   },
   text: {
     fontSize: 18,
