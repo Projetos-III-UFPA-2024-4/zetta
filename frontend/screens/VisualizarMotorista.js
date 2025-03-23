@@ -61,7 +61,6 @@ const VisualizarMotorista = () => {
         (item.vezesAcimaLimite?.toString() || '').toLowerCase().includes(termoLowerCase) || // Vezes acima de 90 km/h
         (item.total_sono?.toString() || '').toLowerCase().includes(termoLowerCase) || // Total Sono
         (item.total_dist?.toString() || '').toLowerCase().includes(termoLowerCase) || // Total Distração
-        (item.media_orient?.toString() || '').toLowerCase().includes(termoLowerCase) || // Média Orientação
         (item.classificacao?.toLowerCase() || '').includes(termoLowerCase) || // Classificação
         formatarHorario(item.horario_inicio).toLowerCase().includes(termoLowerCase) || // Horário Início
         formatarHorario(item.horario_termino).toLowerCase().includes(termoLowerCase) // Horário Término
@@ -114,20 +113,13 @@ const VisualizarMotorista = () => {
             </View>
 
             <View style={styles.metricaItem}>
-              <Text style={styles.metricaTitulo}>Total Sono</Text>
+              <Text style={styles.metricaTitulo}>Sonolência</Text>
               <Text style={styles.metricaValor}>{item.total_sono || 0}</Text>
             </View>
 
             <View style={styles.metricaItem}>
-              <Text style={styles.metricaTitulo}>Total Distração</Text>
+              <Text style={styles.metricaTitulo}>Distração</Text>
               <Text style={styles.metricaValor}>{item.total_dist || 0}</Text>
-            </View>
-
-            <View style={styles.metricaItem}>
-              <Text style={styles.metricaTitulo}>Média Orientação</Text>
-              <Text style={styles.metricaValor}>
-                {item.media_orient ? item.media_orient.toFixed(2) : '0.00'}
-              </Text>
             </View>
 
             <View style={styles.metricaItem}>
@@ -212,7 +204,7 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   metricaTitulo: {
-    fontSize: 14,
+    fontSize: 16,
     color: '#fff',
     marginBottom: 4,
   },

@@ -20,6 +20,8 @@ const CameraFunction = () => {
   const [inicioCaptura, setInicioCaptura] = useState(null);
   const [terminoCaptura, setTerminoCaptura] = useState(null);
   const [dadosGrafico, setDadosGrafico] = useState([]);
+  const [totalSono, setTotalSono] = useState(0); // Contador para drowsiness_alert
+  const [totalDist, setTotalDist] = useState(0); // Contador para distraction_alert
   const cameraRef = useRef(null);
   const locationSubscriptionRef = useRef(null);
   const intervaloRef = useRef(null);
@@ -125,10 +127,12 @@ const CameraFunction = () => {
           if (data.drowsiness_alert && now - lastAlertTime.drowsiness >= 10000) {
             Alert.alert('Alerta de Sonolência', 'O motorista parece estar com sono!');
             setLastAlertTime((prev) => ({ ...prev, drowsiness: now }));
+            setTotalSono((prev) => prev + 1); // Incrementa o contador de sono
             playAlarm();
           } else if (data.distraction_alert && now - lastAlertTime.distraction >= 10000) {
             Alert.alert('Alerta de Distração', 'O motorista parece distraído!');
             setLastAlertTime((prev) => ({ ...prev, distraction: now }));
+            setTotalDist((prev) => prev + 1); // Incrementa o contador de distração
             playAlarm();
           } else if (data.yawning_alert && now - lastAlertTime.yawning >= 10000) {
             Alert.alert('Alerta de Bocejo', 'O motorista está bocejando!');
@@ -167,7 +171,7 @@ const CameraFunction = () => {
         setErrorMsg('Permissão para acessar a localização foi negada');
         return;
       }
-
+  
       locationSubscriptionRef.current = await Location.watchPositionAsync(
         {
           accuracy: Location.Accuracy.High,
@@ -179,9 +183,15 @@ const CameraFunction = () => {
           if (speed != null && !isNaN(speed)) {
             const velocidadeKmh = speed * 3.6;
             setVelocidade(velocidadeKmh);
-            if (velocidadeKmh > maior_velocidade) {
-              setMaiorVelocidade(velocidadeKmh);
-            }
+  
+            // Atualiza a maior velocidade
+            setMaiorVelocidade((prevMaiorVelocidade) => {
+              if (velocidadeKmh > prevMaiorVelocidade) {
+                return velocidadeKmh;
+              }
+              return prevMaiorVelocidade;
+            });
+  
             setDadosGrafico((prevDados) => [...prevDados, velocidadeKmh]);
           } else {
             console.warn("Velocidade não capturada corretamente");
@@ -238,6 +248,8 @@ const CameraFunction = () => {
         horario_termino: termino,
         duracao,
         dadosGrafico,
+        total_sono: totalSono, // Passa o total de alertas de sono
+        total_dist: totalDist, // Passa o total de alertas de distração
         timestamp: new Date().toISOString(),
       });
     }
