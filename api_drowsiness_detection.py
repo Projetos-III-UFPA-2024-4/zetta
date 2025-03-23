@@ -12,6 +12,15 @@ LIMIAR_EAR = 0.19  # Limiar para detecção de olhos fechados
 LIMIAR_MAR = 0.9   # Limiar para detecção de bocejos
 LIMIAR_ORIENTACAO = 0.4  # Limiar para detecção de distração
 
+# Inicializa o MediaPipe Face Mesh uma única vez
+mp_face_mesh = mp.solutions.face_mesh
+face_mesh = mp_face_mesh.FaceMesh(
+    max_num_faces=1,
+    refine_landmarks=True,
+    min_detection_confidence=0.5,
+    min_tracking_confidence=0.5
+)
+
 def calcular_ear(olho):
     """Calcula a relação de aspecto dos olhos (EAR)."""
     A = dist.euclidean(olho[1], olho[5])
@@ -21,7 +30,7 @@ def calcular_ear(olho):
     return ear
 
 def calcular_mar(boca):
-    """Calcula a relação de aspecto da boca (MAR) usando pontos específicos do MediaPipe Face Mesh."""
+    """Calcula a relação de aspecto da boca (MAR)."""
     A = dist.euclidean(boca[5], boca[14])
     B = dist.euclidean(boca[4], boca[13])
     C = dist.euclidean(boca[6], boca[15])
@@ -42,15 +51,6 @@ def calcular_orientacao(shape):
 
 def processar_frame(frame):
     """Processa um frame e retorna os resultados."""
-    # Inicializa o MediaPipe Face Mesh dentro da função para evitar problemas de estado
-    mp_face_mesh = mp.solutions.face_mesh
-    face_mesh = mp_face_mesh.FaceMesh(
-        max_num_faces=1,
-        refine_landmarks=True,
-        min_detection_confidence=0.5,
-        min_tracking_confidence=0.5
-    )
-
     frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
     resultados_face_mesh = face_mesh.process(frame_rgb)
     resultados = {
@@ -89,8 +89,6 @@ def processar_frame(frame):
             if orientacao < LIMIAR_ORIENTACAO:
                 resultados["distraction_alert"] = True
 
-    # Libera os recursos do MediaPipe Face Mesh
-    face_mesh.close()
     return resultados
 
 @app.route('/detectar_fadiga', methods=['POST'])
@@ -122,5 +120,5 @@ def detectar_fadiga():
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.INFO)  # Configuração básica de logging
-    print("API rodando em: http://192.168.1.4:5002/detectar_fadiga")
-    app.run(debug=False, host='192.168.1.4', port=5002)  # Execução do Flask para ser acessível externamente
+    print("API rodando em: http://0.0.0.0:5002/detectar_fadiga")
+    app.run(debug=False, host='0.0.0.0', port=5002)
