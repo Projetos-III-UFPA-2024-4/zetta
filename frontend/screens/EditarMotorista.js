@@ -1,18 +1,28 @@
-import React, { useEffect, useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, Image, Modal, Platform } from 'react-native';
+import { Picker } from '@react-native-picker/picker';
+import DateTimePicker from '@react-native-community/datetimepicker';
 import { useRoute } from '@react-navigation/native';
 
 const EditarMotorista = ({ navigation }) => {
     const route = useRoute();
-    const { userId } = route.params; // Pega o userId passado
+    const { userId } = route.params;
 
     // Estados para os campos do formulário
     const [nome, setNome] = useState('');
     const [email, setEmail] = useState('');
-    const [dataNascimento, setDataNascimento] = useState('');
+    const [dataNascimento, setDataNascimento] = useState(new Date());
+    const [showDataNascimento, setShowDataNascimento] = useState(false);
     const [tipoCarteira, setTipoCarteira] = useState('');
+    const [showTipoCarteira, setShowTipoCarteira] = useState(false);
     const [placaVeiculo, setPlacaVeiculo] = useState('');
     const [senha, setSenha] = useState('');
+
+    // Função para formatar a data para YYYY-MM-DD
+    const formatarData = (data) => {
+        const dataObj = new Date(data);
+        return dataObj.toISOString().split('T')[0];
+    };
 
     // Busca os dados do motorista ao carregar a tela
     useEffect(() => {
@@ -24,8 +34,8 @@ const EditarMotorista = ({ navigation }) => {
 
                 // Preenche os estados com os dados do motorista
                 setNome(data.nome);
-                setEmail(data.email);
-                setDataNascimento(data.dataNascimento);
+                setEmail(data.emailOuNumero || '');
+                setDataNascimento(new Date(data.dataNascimento));
                 setTipoCarteira(data.tipoCarteira);
                 setPlacaVeiculo(data.placaVeiculo);
                 setSenha(data.senha);
@@ -41,15 +51,15 @@ const EditarMotorista = ({ navigation }) => {
     const salvarAlteracoes = async () => {
         const dadosAtualizados = {
             nome,
-            email,
-            dataNascimento,
+            emailOuNumero: email,
+            dataNascimento: formatarData(dataNascimento),
             tipoCarteira,
             placaVeiculo,
             senha,
         };
 
         try {
-            const response = await fetch(`http://192.168.1.4:5000/atualizar-usuario/${userId}`, {
+            const response = await fetch(`http://44.196.219.45:5000/atualizar-usuario/${userId}`, {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
@@ -63,75 +73,117 @@ const EditarMotorista = ({ navigation }) => {
 
             const result = await response.json();
             console.log('Motorista atualizado com sucesso:', result);
-            navigation.goBack(); // Volta para a tela anterior após salvar
+            navigation.goBack();
         } catch (error) {
             console.error('Erro ao salvar alterações:', error);
         }
     };
 
+    // Função para lidar com a mudança de data
+    const handleDateChange = (event, selectedDate) => {
+        setShowDataNascimento(false);
+        if (selectedDate) {
+            setDataNascimento(selectedDate);
+        }
+    };
+
     return (
         <View style={styles.container}>
-            <Text style={styles.titulo}>Editar Motorista</Text>
-            <Text style={styles.subtitulo}>ID do motorista: {userId}</Text>
+            <Image source={require('../assets/logocadastro.png')} style={styles.logoImage} />
+            <Image source={require('../assets/quadro1.png')} style={styles.quadroImage} />
 
-            {/* Campo Nome */}
             <TextInput
-                style={styles.input}
-                placeholder="Nome"
-                placeholderTextColor="#999"
+                style={styles.inputA}
+                placeholder="Nome Completo"
+                placeholderTextColor="#fff"
                 value={nome}
                 onChangeText={setNome}
             />
 
-            {/* Campo Email */}
             <TextInput
-                style={styles.input}
-                placeholder="Email"
-                placeholderTextColor="#999"
+                style={styles.inputA1}
+                placeholder="Email ou número"
+                placeholderTextColor="#fff"
                 value={email}
                 onChangeText={setEmail}
             />
 
-            {/* Campo Data de Nascimento */}
-            <TextInput
-                style={styles.input}
-                placeholder="Data de Nascimento"
-                placeholderTextColor="#999"
-                value={dataNascimento}
-                onChangeText={setDataNascimento}
-            />
+            {/* Botão para abrir o seletor de data */}
+            <TouchableOpacity onPress={() => setShowDataNascimento(true)} style={styles.inputB}>
+                <Text style={styles.inputC1}>
+                    {dataNascimento ? `Data de Nascimento: ${dataNascimento.toLocaleDateString()}` : 'Selecione a Data de Nascimento'}
+                </Text>
+            </TouchableOpacity>
+
+            {/* Modal para exibir o DateTimePicker */}
+            {showDataNascimento && (
+                <Modal
+                    transparent={true}
+                    animationType="slide"
+                    visible={showDataNascimento}
+                    onRequestClose={() => setShowDataNascimento(false)}
+                >
+                    <View style={styles.modalContainer}>
+                        <View style={styles.modalContent}>
+                            <DateTimePicker
+                                value={dataNascimento || new Date()}
+                                mode="date"
+                                display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+                                onChange={handleDateChange}
+                            />
+                        </View>
+                    </View>
+                </Modal>
+            )}
+
+            <Image source={require('../assets/quadro1.png')} style={styles.quadroImage2} />
 
             {/* Campo Tipo de Carteira */}
-            <TextInput
-                style={styles.input}
-                placeholder="Tipo de Carteira"
-                placeholderTextColor="#999"
-                value={tipoCarteira}
-                onChangeText={setTipoCarteira}
-            />
+            <TouchableOpacity onPress={() => setShowTipoCarteira(!showTipoCarteira)} style={styles.inputE1}>
+                <Text style={styles.inputC2}>
+                    {tipoCarteira ? `Tipo de Veículo: ${tipoCarteira}` : 'Selecione o Tipo de Veículo'}
+                </Text>
+            </TouchableOpacity>
+            {showTipoCarteira && (
+                <View style={styles.pickerContainer}>
+                    <Picker
+                        selectedValue={tipoCarteira}
+                        style={styles.picker}
+                        onValueChange={(itemValue) => setTipoCarteira(itemValue)}
+                    >
+                        <Picker.Item label="2 Eixos" value="A" />
+                        <Picker.Item label="3 Eixos" value="B" />
+                        <Picker.Item label="Cavalo Trucado" value="C" />
+                        <Picker.Item label="Bitrem" value="D" />
+                        <Picker.Item label="Tritrem" value="E" />
+                        <Picker.Item label="Rodotrem" value="F" />
+                    </Picker>
+                </View>
+            )}
 
-            {/* Campo Placa do Veículo */}
             <TextInput
-                style={styles.input}
+                style={styles.inputE}
                 placeholder="Placa do Veículo"
-                placeholderTextColor="#999"
+                placeholderTextColor="#fff"
                 value={placaVeiculo}
                 onChangeText={setPlacaVeiculo}
             />
 
-            {/* Campo Senha */}
             <TextInput
-                style={styles.input}
+                style={styles.inputF1}
                 placeholder="Senha"
-                placeholderTextColor="#999"
+                placeholderTextColor="#fff"
+                secureTextEntry={true}
                 value={senha}
                 onChangeText={setSenha}
-                secureTextEntry // Oculta a senha
             />
 
-            {/* Botão para salvar as alterações */}
-            <TouchableOpacity style={styles.botao} onPress={salvarAlteracoes}>
-                <Text style={styles.textoBotao}>Salvar Alterações</Text>
+            <TouchableOpacity style={styles.button} onPress={salvarAlteracoes}>
+                <Text style={styles.buttonText}>Salvar Alterações</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity onPress={() => navigation.goBack()} style={styles.voltarButton}>
+                <Text style={styles.voltarText}>Voltar</Text>
             </TouchableOpacity>
         </View>
     );
@@ -139,41 +191,148 @@ const EditarMotorista = ({ navigation }) => {
 
 const styles = StyleSheet.create({
     container: {
+        backgroundColor: '#042B3D',
         flex: 1,
-        padding: 20,
-        backgroundColor: '#f5f5f5',
-    },
-    titulo: {
-        fontSize: 24,
-        fontWeight: 'bold',
-        marginBottom: 10,
-        color: '#000', // Cor do título
-    },
-    subtitulo: {
-        fontSize: 16,
-        color: '#666',
-        marginBottom: 20,
-    },
-    input: {
-        height: 40,
-        borderColor: '#ccc',
-        borderWidth: 1,
-        borderRadius: 5,
-        paddingHorizontal: 10,
-        marginBottom: 15,
-        backgroundColor: '#fff',
-        color: '#000', // Cor do texto digitado
-    },
-    botao: {
-        backgroundColor: '#007bff',
-        padding: 15,
-        borderRadius: 5,
+        justifyContent: 'center',
         alignItems: 'center',
+        padding: 20,
     },
-    textoBotao: {
+    logoImage: {
+        position: 'absolute',
+        width: 100,
+        height: 100,
+        top: 35,
+    },
+    inputA: {
+        position: 'absolute',
+        padding: 10,
+        width: '80%',
+        borderBottomWidth: 1,
+        borderBottomColor: '#fff',
+        marginBottom: 20,
+        top: 180,
         color: '#fff',
-        fontSize: 16,
+    },
+    inputA1: {
+        position: 'absolute',
+        padding: 10,
+        width: '80%',
+        borderBottomWidth: 1,
+        borderBottomColor: '#fff',
+        marginBottom: 20,
+        top: 240,
+        color: '#fff',
+    },
+    inputB: {
+        position: 'absolute',
+        width: '80%',
+        marginBottom: 20,
+        top: 300,
+    },
+    inputC1: {
+        position: 'absolute',
+        padding: 10,
+        borderBottomWidth: 1,
+        borderBottomColor: '#fff',
+        color: '#fff',
+        marginBottom: 10,
+    },
+    inputC2: {
+        position: 'absolute',
+        padding: 10,
+        borderBottomWidth: 1,
+        borderBottomColor: '#fff',
+        color: '#fff',
+        marginBottom: 10,
+    },
+    inputE: {
+        position: 'absolute',
+        padding: 10,
+        width: '80%',
+        borderBottomWidth: 1,
+        borderBottomColor: '#fff',
+        marginBottom: 20,
+        top: 480,
+        color: '#fff',
+    },
+    inputE1: {
+        position: 'absolute',
+        padding: 10,
+        width: '80%',
+        marginBottom: 20,
+        top: 420,
+        color: '#fff',
+    },
+    inputF1: {
+        position: 'absolute',
+        padding: 10,
+        width: '40%',
+        borderBottomWidth: 1,
+        borderBottomColor: '#fff',
+        marginBottom: 20,
+        right: 207,
+        top: 535,
+        color: '#fff',
+    },
+    pickerContainer: {
+        position: 'absolute',
+        top: 100,
+        left: 0,
+        right: 0,
+        backgroundColor: '#fff',
+        zIndex: 1000,
+    },
+    button: {
+        position: 'absolute',
+        backgroundColor: '#61B8D8',
+        padding: 10,
+        top: 670,
+        borderRadius: 15,
+    },
+    buttonText: {
+        color: '#fff',
         fontWeight: 'bold',
+    },
+    voltarButton: {
+        position: 'absolute',
+        top: 700,
+        marginTop: 20,
+    },
+    voltarText: {
+        color: '#61B8D8',
+    },
+    quadroImage: {
+        position: 'absolute',
+        top: 170,
+        width: 360,
+        height: 220,
+        marginBottom: 20,
+        borderTopLeftRadius: 0,
+        borderTopRightRadius: 20,
+        borderBottomLeftRadius: 20,
+        borderBottomRightRadius: 0,
+    },    
+    quadroImage2: {
+        position: 'absolute',
+        top: 410,
+        width: 360,
+        height: 190,
+        marginBottom: 20,
+        borderTopLeftRadius: 0,
+        borderTopRightRadius: 20,
+        borderBottomLeftRadius: 20,
+        borderBottomRightRadius: 0,
+    },
+    modalContainer: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    },
+    modalContent: {
+        backgroundColor: '#fff',
+        borderRadius: 10,
+        padding: 20,
     },
 });
 
