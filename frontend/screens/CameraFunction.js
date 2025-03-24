@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Alert, Button } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import * as Location from 'expo-location';
 import { useNavigation } from '@react-navigation/native';
@@ -33,6 +33,9 @@ const CameraFunction = () => {
     yawning: 0,
   });
   const capturaIntervalRef = useRef(null);
+
+  // Cooldown para os alertas (10 segundos)
+  const ALERT_COOLDOWN = 10000; // 10 segundos em milissegundos
 
   // Recupera o user_id do AsyncStorage ao carregar o componente
   useEffect(() => {
@@ -123,20 +126,20 @@ const CameraFunction = () => {
 
           const now = Date.now();
 
-          // Prioridade: Sonolência > Distração > Bocejo
-          if (data.drowsiness_alert && now - lastAlertTime.drowsiness >= 10000) {
-            Alert.alert('Alerta de Sonolência', 'O motorista parece estar com sono!');
-            setLastAlertTime((prev) => ({ ...prev, drowsiness: now }));
+          // Verifica o cooldown antes de exibir o alerta
+          if (data.drowsiness_alert && now - lastAlertTime.drowsiness >= ALERT_COOLDOWN) {
+            setLastAlertTime((prev) => ({ ...prev, drowsiness: now })); // Atualiza o timestamp
             setTotalSono((prev) => prev + 1); // Incrementa o contador de sono
+            Alert.alert('Alerta de Sonolência', 'O motorista parece estar com sono!');
             playAlarm();
-          } else if (data.distraction_alert && now - lastAlertTime.distraction >= 10000) {
-            Alert.alert('Alerta de Distração', 'O motorista parece distraído!');
-            setLastAlertTime((prev) => ({ ...prev, distraction: now }));
+          } else if (data.distraction_alert && now - lastAlertTime.distraction >= ALERT_COOLDOWN) {
+            setLastAlertTime((prev) => ({ ...prev, distraction: now })); // Atualiza o timestamp
             setTotalDist((prev) => prev + 1); // Incrementa o contador de distração
+            Alert.alert('Alerta de Distração', 'O motorista parece distraído!');
             playAlarm();
-          } else if (data.yawning_alert && now - lastAlertTime.yawning >= 10000) {
+          } else if (data.yawning_alert && now - lastAlertTime.yawning >= ALERT_COOLDOWN) {
+            setLastAlertTime((prev) => ({ ...prev, yawning: now })); // Atualiza o timestamp
             Alert.alert('Alerta de Bocejo', 'O motorista está bocejando!');
-            setLastAlertTime((prev) => ({ ...prev, yawning: now }));
           }
         }
       } catch (error) {
@@ -148,7 +151,7 @@ const CameraFunction = () => {
   // Efeito para captura automática de frames
   useEffect(() => {
     if (isCapturing) {
-      capturaIntervalRef.current = setInterval(capturarEEnviarFrame, 1000); // Captura e envia frames a cada 1 segundo
+      capturaIntervalRef.current = setInterval(capturarEEnviarFrame, 1500); // Captura e envia frames a cada 1 segundo
     } else {
       if (capturaIntervalRef.current) {
         clearInterval(capturaIntervalRef.current);
@@ -171,7 +174,7 @@ const CameraFunction = () => {
         setErrorMsg('Permissão para acessar a localização foi negada');
         return;
       }
-  
+
       locationSubscriptionRef.current = await Location.watchPositionAsync(
         {
           accuracy: Location.Accuracy.High,
@@ -183,7 +186,7 @@ const CameraFunction = () => {
           if (speed != null && !isNaN(speed)) {
             const velocidadeKmh = speed * 3.6;
             setVelocidade(velocidadeKmh);
-  
+
             // Atualiza a maior velocidade
             setMaiorVelocidade((prevMaiorVelocidade) => {
               if (velocidadeKmh > prevMaiorVelocidade) {
@@ -191,7 +194,7 @@ const CameraFunction = () => {
               }
               return prevMaiorVelocidade;
             });
-  
+
             setDadosGrafico((prevDados) => [...prevDados, velocidadeKmh]);
           } else {
             console.warn("Velocidade não capturada corretamente");
@@ -277,9 +280,14 @@ const CameraFunction = () => {
 
   if (!permission.granted) {
     return (
-      <View style={styles.container}>
-        <Text style={styles.message}>Precisamos de sua permissão para acessar a câmera</Text>
-        <Button onPress={requestPermission} title="Conceder Permissão" />
+      <View style={styles.permissionContainer}>
+        <Text style={styles.permissionTitle}>Permissão Necessária</Text>
+        <Text style={styles.permissionMessage}>
+          Precisamos de acesso à câmera e localização para continuar.
+        </Text>
+        <TouchableOpacity style={styles.permissionButton} onPress={requestPermission}>
+          <Text style={styles.permissionButtonText}>Conceder Permissão</Text>
+        </TouchableOpacity>
       </View>
     );
   }
@@ -298,11 +306,44 @@ const CameraFunction = () => {
           </TouchableOpacity>
         </View>
       </CameraView>
-      <Text style={styles.velocidadeText}>
-        Velocidade: {velocidade !== null ? `${velocidade.toFixed(2)} km/h` : 'N/A'}
-      </Text>
-      <Text style={styles.dataHoraText}>Maior Velocidade: {maior_velocidade.toFixed(2)} km/h</Text>
-      <Text style={styles.dataHoraText}>Tempo Decorrido: {duracao} segundos</Text>
+
+      {/* Informações abaixo da câmera */}
+      <View style={styles.infoContainer}>
+        {/* Primeira linha: duas colunas */}
+        <View style={styles.infoRow}>
+          <View style={styles.infoBox}>
+            <Text style={styles.infoLabel}>Velocidade Atual</Text>
+            <Text style={styles.infoValue}>
+              {velocidade !== null ? `${velocidade.toFixed(2)} km/h` : 'N/A'}
+            </Text>
+          </View>
+          <View style={styles.infoBox}>
+            <Text style={styles.infoLabel}>Maior Velocidade</Text>
+            <Text style={styles.infoValue}>
+              {maior_velocidade.toFixed(2)} km/h
+            </Text>
+          </View>
+        </View>
+
+        {/* Segunda linha: duas colunas */}
+        <View style={styles.infoRow}>
+          <View style={styles.infoBox}>
+            <Text style={styles.infoLabel}>Tempo Decorrido</Text>
+            <Text style={styles.infoValue}>{duracao} segundos</Text>
+          </View>
+          <View style={styles.infoBox}>
+            <Text style={styles.infoLabel}>Alertas de Sono</Text>
+            <Text style={styles.infoValue}>{totalSono}</Text>
+          </View>
+        </View>
+
+        {/* Terceira linha: caixa centralizada */}
+        <View style={styles.infoBoxCentralized}>
+          <Text style={styles.infoLabel}>Alertas de Distração</Text>
+          <Text style={styles.infoValue}>{totalDist}</Text>
+        </View>
+      </View>
+
       {errorMsg && <Text style={styles.error}>{errorMsg}</Text>}
     </View>
   );
@@ -311,22 +352,47 @@ const CameraFunction = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f0f8ff',
+    backgroundColor: '#042B3D',
     justifyContent: 'center',
     alignItems: 'center',
     padding: 20,
   },
-  message: {
-    textAlign: 'center',
-    paddingBottom: 10,
-    color: '#333',
+  permissionContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#042B3D',
+    padding: 20,
+  },
+  permissionTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#61B8D8',
+    marginBottom: 10,
+  },
+  permissionMessage: {
     fontSize: 16,
+    color: '#FFFFFF',
+    textAlign: 'center',
+    marginBottom: 20,
+  },
+  permissionButton: {
+    backgroundColor: '#61B8D8',
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    borderRadius: 25,
+    elevation: 3,
+  },
+  permissionButtonText: {
+    fontSize: 18,
+    color: '#042B3D',
+    fontWeight: 'bold',
   },
   camera: {
     width: '100%',
     height: 400,
     borderRadius: 40,
-    borderColor: '#0097a7',
+    borderColor: '#61B8D8',
     borderWidth: 2,
     marginBottom: 20,
   },
@@ -340,7 +406,7 @@ const styles = StyleSheet.create({
   button: {
     paddingVertical: 10,
     paddingHorizontal: 20,
-    backgroundColor: '#00bcd4',
+    backgroundColor: '#61B8D8',
     borderRadius: 30,
     width: '60%',
     alignItems: 'center',
@@ -349,23 +415,47 @@ const styles = StyleSheet.create({
     top: 320,
   },
   buttonActive: {
-    backgroundColor: '#ff4444', // Cor diferente quando a captura está ativa
+    backgroundColor: '#042B3D', // Cor diferente quando a captura está ativa
   },
   text: {
     fontSize: 18,
-    color: '#fff',
+    color: '#FFFFFF',
     fontWeight: 'bold',
   },
-  velocidadeText: {
-    fontSize: 18,
-    fontWeight: 'bold',
+  infoContainer: {
+    width: '100%',
     marginTop: 20,
-    color: '#333',
   },
-  dataHoraText: {
-    fontSize: 16,
+  infoRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 10,
+  },
+  infoBox: {
+    width: '48%',
+    backgroundColor: '#8BC9DD',
+    borderRadius: 10,
+    padding: 10,
+    alignItems: 'center',
+  },
+  infoBoxCentralized: {
+    width: '48%',
+    backgroundColor: '#8BC9DD',
+    borderRadius: 10,
+    padding: 10,
+    alignItems: 'center',
     marginTop: 10,
-    color: '#555',
+    left: 100,
+  },
+  infoLabel: {
+    fontSize: 14,
+    color: '#042B3D',
+    fontWeight: 'bold',
+  },
+  infoValue: {
+    fontSize: 18,
+    color: '#FFFFFF',
+    fontWeight: 'bold',
   },
   error: {
     color: 'red',
