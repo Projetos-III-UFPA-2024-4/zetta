@@ -32,9 +32,9 @@ const LoginTela = ({ navigation }) => {
 
         // Navega para a tela correta com base no tipo de usuário
         if (data.redirectTo === '/HomeADM') {
-          navigation.navigate('HomeADM');
+          navigation.navigate('HomeADM', { userId: id }); // Passa o userId como parâmetro
         } else if (data.redirectTo === '/HomeUSER') {
-          navigation.navigate('HomeUSER');
+          navigation.navigate('HomeUSER', { userId: id }); // Passa o userId como parâmetro
         }
       } else {
         // Exibe uma mensagem de erro se a autenticação falhar
@@ -45,6 +45,11 @@ const LoginTela = ({ navigation }) => {
       Alert.alert('Erro', 'Não foi possível conectar ao servidor.');
       console.error(error);
     }
+  };
+
+  const handleCadastrarEmpresa = () => {
+    // Navega para a tela de CadastroMotorista
+    navigation.navigate('CadastroMotorista');
   };
 
   return (
@@ -74,6 +79,9 @@ const LoginTela = ({ navigation }) => {
       </TouchableOpacity>
       <TouchableOpacity style={styles.confirmButton} onPress={handleLogin}>
         <Text style={styles.confirmButtonText}>Confirmar</Text>
+      </TouchableOpacity>
+      <TouchableOpacity style={styles.cadastrarButton} onPress={handleCadastrarEmpresa}>
+        <Text style={styles.cadastrButtonText}>Cadastrar Empresa</Text>
       </TouchableOpacity>
       <View style={styles.footer}>
         <Image
@@ -130,8 +138,26 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     borderRadius: 25,
     alignItems: 'center',
+    marginBottom: 16, // Espaçamento entre os botões
+  },
+  cadastrarButton: {
+    width: 200,
+    height: 45,
+    alignSelf: 'center',
+    paddingVertical: 10,
+    borderRadius: 25,
+    alignItems: 'center',
+    borderWidth: 2, // Adiciona uma borda
+    borderColor: '#042B3D', // Cor da borda (azul escuro)
+    top: 180,
   },
   confirmButtonText: {
+    color: '#fff',
+    textAlign: 'center',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  cadastrButtonText: {
     color: '#fff',
     textAlign: 'center',
     fontSize: 16,
